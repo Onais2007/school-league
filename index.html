@@ -262,6 +262,10 @@ img{max-width:100%}
  .col.l::after,.col.r::before{display:none}
  .br>.col:nth-child(1){order:1}.br>.col:nth-child(5){order:2}.br>.col:nth-child(2){order:3}.br>.col:nth-child(4){order:4}.br>.col:nth-child(3){order:5}
 }
+.wo{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:6px}
+.wo select{font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:8px;background:#06100a;color:var(--chalk)}
+.g4ed{margin-bottom:6px}
+.mvp+.mvp{border-top:none;padding-top:0}
 </style>
 <style>html,body{margin:0}</style>
 </head>
@@ -363,7 +367,12 @@ function pubCard(){return `<div class="card" style="border:1px solid var(--gold)
 
 /* ---------- tournament logic ---------- */
 function legs(g,gi,a,b){const m1=M(g,"G"+gi+"a"),m2=M(g,"G"+gi+"b");const sc=[n(m1.h),n(m1.a),n(m2.h),n(m2.a)];
- if(!a||!b||sc.some(x=>x===null))return null;
+ if(!a||!b)return null;
+ const quit=m1.wo=="h"||m2.wo=="a"?0:m1.wo=="a"||m2.wo=="h"?1:null;
+ if(quit!==null){const v=sc.map(x=>x??0),played=[m1,m2].filter((m,i)=>m.wo||(sc[i*2]!==null&&sc[i*2+1]!==null)).length;
+  const ga=v[0]+v[3],gb=v[1]+v[2];const rows=[{t:a,P:played,W:quit?played:0,D:0,L:quit?0:played,F:ga,A:gb,Pts:quit?3*played:0},{t:b,P:played,W:quit?0:played,D:0,L:quit?played:0,F:gb,A:ga,Pts:quit?0:3*played}].map(r=>({...r,GD:r.F-r.A}));
+  return {w:[a,b][1-quit],l:[a,b][quit],lrow:{...rows[quit],wo:true},tied:false,rows,wo:[a,b][quit]}}
+ if(sc.some(x=>x===null))return null;
  const ga=sc[0]+sc[3],gb=sc[1]+sc[2];
  const res=(x,y)=>x>y?3:x==y?1:0;
  const pa=res(sc[0],sc[1])+res(sc[3],sc[2]),pb=res(sc[1],sc[0])+res(sc[2],sc[3]);
@@ -377,9 +386,9 @@ function single(g,id,a,b){const m=M(g,id),x=n(m.h),y=n(m.a);if(!a||!b||x===null|
 const CMP={};
 function compute(g){const T=S.grades[g].teams,R={};
  R.g=[[T[0],T[1]],[T[2],T[3]],[T[4],T[5]]].map((p,i)=>legs(g,i+1,p[0],p[1]));
- const losers=R.g.map(r=>r&&r.lrow).filter(Boolean);R.best=null;
- const pk=S.grades[g].pick;if(pk){R.best=pk;R.picked=true}else if(losers.length==3){const s=[...losers].sort((a,b)=>b.Pts-a.Pts||b.GD-a.GD||b.F-a.F);
-  const tie=s[0].Pts==s[1].Pts&&s[0].GD==s[1].GD&&s[0].F==s[1].F;R.bestTie=tie;R.best=tie?(S.grades[g].draw||null):s[0].t;R.losers=s}
+ const losers=R.g.map(r=>r&&r.lrow).filter(Boolean);const losersOK=losers.filter(r=>!r.wo);R.best=null;
+ const pk=S.grades[g].pick;if(pk){R.best=pk;R.picked=true}else if(losers.length==3&&losersOK.length){const s=[...losersOK].sort((a,b)=>b.Pts-a.Pts||b.GD-a.GD||b.F-a.F);
+  const tie=s.length>1&&s[0].Pts==s[1].Pts&&s[0].GD==s[1].GD&&s[0].F==s[1].F;R.bestTie=tie;R.best=tie?(S.grades[g].draw||null):s[0].t;R.losers=s}
  R.g.push(legs(g,4,T[6],R.best));R.W=R.g.map(r=>r&&r.w);
  R.s1=single(g,"S1",R.W[0],R.W[1]);R.s2=single(g,"S2",R.W[2],R.W[3]);R.f=single(g,"F",R.s1.w,R.s2.w);return R}
 const CLP=[[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
@@ -388,7 +397,7 @@ function clIds(){return [...GK.map(g=>compute(g).f.w||null),"T"]}
 function allMatches(){const L=[];
  for(const g of GK){const T=S.grades[g].teams,R=compute(g),G=GR[g];
   const add=(id,a,b,label,stage)=>{const m=M(g,id),p=M(g,id+(id.startsWith("G")?"":"p"));const x=n(m.h),y=n(m.a);
-   L.push({key:g+"|"+id,g,id,a,b,label,stage,gname:G.name,c:G.c,x,y,done:x!==null&&y!==null&&!!a&&!!b,note:m.d||"",dt:X(g+"|"+id).dt||""})};
+   L.push({wo:m.wo||"",key:g+"|"+id,g,id,a,b,label,stage,gname:G.name,c:G.c,x,y,done:x!==null&&y!==null&&!!a&&!!b,note:m.d||"",dt:X(g+"|"+id).dt||""})};
   [[1,0,1],[2,2,3],[3,4,5]].forEach(([i,p,q])=>{add("G"+i+"a",T[p],T[q],"المجموعة "+i+" · ذهاب","grp");add("G"+i+"b",T[q],T[p],"المجموعة "+i+" · إياب","grp")});
   add("G4a",T[6],R.best,"المجموعة 4 · ذهاب","grp");add("G4b",R.best,T[6],"المجموعة 4 · إياب","grp");
   add("S1",R.W[0],R.W[1],"نصف النهائي","ko");add("S2",R.W[2],R.W[3],"نصف النهائي","ko");add("F",R.s1.w,R.s2.w,"النهائي","ko")}
@@ -406,11 +415,11 @@ function stageAwards(g){const ms=allMatches().filter(m=>m.g==g);const sc={},pl={
  ms.forEach(m=>{(X(m.key).sc||[]).forEach(s=>{if(!s||!s.n)return;const team=s.s==1?m.b:m.a;const k=s.n+"|"+team;(sc[k] ||= {n:s.n,team,g:0}).g+=(+s.g||0)});
   if(m.done){const mv=mvpOf(m.key);if(mv&&mv.top){const p=mv.top,team=p.s==1?m.b:m.a,k=p.n+"|"+team;const o=(pl[k] ||= {n:p.n,team,mvp:0,pts:0,pid:null});o.mvp++;o.pts+=p.score;if(p.pid)o.pid=p.pid}}});
  return {scorers:Object.values(sc).sort((a,b)=>b.g-a.g).slice(0,5),players:Object.values(pl).sort((a,b)=>b.mvp-a.mvp||b.pts-a.pts).slice(0,3)}}
-function badgesOf(m){const B=[];if(!m.done)return B;
+function badgesOf(m){const B=[];if(!m.done)return B;if(m.wo){B.push({t:"فوز بالانسحاب: "+tname(m.wo=="h"?m.b:m.a),c:"bw"});return B}
  (X(m.key).sc||[]).forEach(s=>{if(s&&+s.g>=3)B.push({t:"هاتريك: "+s.n,c:""})});
  if(m.y===0)B.push({t:"شباك نظيفة: "+tname(m.a),c:"cs"});if(m.x===0)B.push({t:"شباك نظيفة: "+tname(m.b),c:"cs"});
  if(Math.abs(m.x-m.y)>=3)B.push({t:"فوز عريض",c:"bw"});return B}
-function funStats(g){const ms=allMatches().filter(m=>m.g==g&&m.done);if(!ms.length)return null;const t={};
+function funStats(g){const ms=allMatches().filter(m=>m.g==g&&m.done&&!m.wo);if(!ms.length)return null;const t={};
  ms.forEach(m=>{[[m.a,m.x,m.y],[m.b,m.y,m.x]].forEach(([id,f,a])=>{const o=(t[id] ||= {id,F:0,A:0,P:0});o.F+=f;o.A+=a;o.P++})});
  const T=Object.values(t);const att=[...T].sort((a,b)=>b.F-a.F)[0],def=[...T].sort((a,b)=>a.A/a.P-b.A/b.P)[0];
  const big=[...ms].sort((a,b)=>Math.abs(b.x-b.y)-Math.abs(a.x-a.y))[0],hi=[...ms].sort((a,b)=>(b.x+b.y)-(a.x+a.y))[0];
@@ -425,14 +434,14 @@ function predOpen(m){if(m.done||!m.a||!m.b)return false;if(m.dt&&new Date(m.dt).
 function shirt(label,c){return `<svg class="shirt" viewBox="0 0 40 40" style="color:${c}" aria-hidden="true"><path d="M13 4l-9 6 4 8 4-2v20h16V16l4 2 4-8-9-6c-1 3-4 5-7 5s-6-2-7-5z" fill="currentColor"/><text x="20" y="27" text-anchor="middle">${esc(label)}</text></svg>`}
 function av(pid,name,sm){const d=pid&&PHOTOS[pid];return d?`<img class="av ${sm?"sm":""}" src="${esc(d)}" alt="${esc(name)}">`:`<span class="av ${sm?"sm":""}">${esc((name||"؟").trim().charAt(0))}</span>`}
 function tnode(g,id,score,cls,c){return `<div class="tr ${cls}"><span class="nm" ${id?`data-tm="${g}|${esc(id)}"`:""}>${shirt(tshort(id),id?(c||"var(--c)"):"var(--line)")}${esc(tname(id))}</span><span class="sc">${score??""}</span></div>`}
-function mvpLine(key){const mv=mvpOf(key);const m=findM(key);if(!mv||!m||!m.done)return "";return `<div class="mvp">${av(mv.top.pid,mv.top.n,1)} أفضل لاعب: <b>${esc(mv.top.n)}</b></div>`}
+function mvpLine(key,leg){const mv=mvpOf(key);const m=findM(key);if(!mv||!m||!m.done)return "";return `<div class="mvp" data-open="${key}">${av(mv.top.pid,mv.top.n,1)} ${leg?"أفضل لاعب "+leg:"أفضل لاعب"}: <b>${esc(mv.top.n)}</b></div>`}
 function gnode(g,i,a,b,r,extra){const k1=g+"|G"+i+"a",k2=g+"|G"+i+"b",m1=M(g,"G"+i+"a"),m2=M(g,"G"+i+"b");
  const v=[n(m1.h),n(m1.a),n(m2.h),n(m2.a)],any=v.some(x=>x!==null),A=(v[0]??0)+(v[3]??0),B=(v[1]??0)+(v[2]??0),w=r&&r.w;
  const p=M(g,"G"+i+"p"),cls=t=>!t?"tbd":w?(w==t?"win":"lose"):"";
- const info=any?`${v[0]??"–"}:${v[1]??"–"} | ${v[3]??"–"}:${v[2]??"–"}${n(p.h)!==null?" · ترجيح "+p.h+":"+p.a:""}`:"ذهاب وإياب";
- return `<div class="node" data-open="${k1}"><div class="lab"><b>المجموعة ${i}${extra?" · "+extra:""}</b><span>${info}</span></div>${tnode(g,a,any?A:"",cls(a))}${tnode(g,b,any?B:"",cls(b))}${mvpLine(k2)||mvpLine(k1)}</div>`}
+ const woT=r&&r.wo;const info=woT?`انسحاب ${esc(tname(woT))}`:any?`${v[0]??"–"}:${v[1]??"–"} | ${v[3]??"–"}:${v[2]??"–"}${n(p.h)!==null?" · ترجيح "+p.h+":"+p.a:""}`:"ذهاب وإياب";
+ return `<div class="node" data-open="${k1}"><div class="lab"><b>المجموعة ${i}${extra?" · "+extra:""}</b><span>${info}</span></div>${tnode(g,a,any?A:"",cls(a))}${tnode(g,b,any?B:"",cls(b))}${mvpLine(k1,"(ذهاب)")}${mvpLine(k2,"(إياب)")}</div>`}
 function snode(g,id,a,b,r,lab,fin){const m=M(g,id),x=n(m.h),y=n(m.a),p=M(g,id+"p");const cls=t=>!t?"tbd":r.w?(r.w==t?"win":"lose"):"";
- return `<div class="node ${fin?"fin":""}" data-open="${g}|${id}"><div class="lab"><b>${lab}</b><span>${x!==null&&n(p.h)!==null?"ترجيح "+p.h+":"+p.a:esc(m.d||"")}</span></div>${tnode(g,a,x??"",cls(a))}${tnode(g,b,y??"",cls(b))}${mvpLine(g+"|"+id)}</div>`}
+ return `<div class="node ${fin?"fin":""}" data-open="${g}|${id}"><div class="lab"><b>${lab}</b><span>${m.wo?"انسحاب "+esc(tname(m.wo=="h"?a:b)):x!==null&&n(p.h)!==null?"ترجيح "+p.h+":"+p.a:esc(m.d||"")}</span></div>${tnode(g,a,x??"",cls(a))}${tnode(g,b,y??"",cls(b))}${mvpLine(g+"|"+id)}</div>`}
 const CUP=`<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M18 8h28v10c0 9-6 16-14 16S18 27 18 18z" fill="var(--gold)"/><path d="M18 12H8c0 8 4 12 11 13M46 12h10c0 8-4 12-11 13" stroke="var(--gold)" stroke-width="3" fill="none"/><rect x="28" y="34" width="8" height="10" fill="var(--gold-deep)"/><rect x="20" y="44" width="24" height="7" rx="2" fill="var(--gold)"/><rect x="16" y="51" width="32" height="5" rx="2" fill="var(--gold-deep)"/></svg>`;
 function awardsHTML(g){const A=stageAwards(g),F=funStats(g);const best=A.players[0];
  return `<div class="awards">
@@ -493,7 +502,7 @@ function matchModal(key){const m=findM(key);if(!m)return "";const xx=X(key),mv=m
  const sc=(xx.sc||[]).filter(s=>s&&s.n);const myV=ME&&VOTES[ME]?VOTES[ME][key]:undefined;
  const voteOpen=m.done&&!xx.lock&&ME&&DB;
  return `<div class="mini">${esc(m.gname)} · ${esc(m.label)}${m.dt?" · "+esc(fmtDT(m.dt)):""}${m.note?" · "+esc(m.note):""}</div>
- <div class="score"><span class="tm" data-tm="${m.g}|${esc(m.a||"")}">${esc(tname(m.a))}</span><span class="res">${m.done?m.y+" – "+m.x:"vs"}</span><span class="tm" data-tm="${m.g}|${esc(m.b||"")}">${esc(tname(m.b))}</span></div>
+ <div class="score"><span class="tm" data-tm="${m.g}|${esc(m.a||"")}">${esc(tname(m.a))}</span><span class="res">${m.done?m.y+" – "+m.x:"vs"}</span>${m.wo?`<span class="mini" style="grid-column:1/-1">انسحب ${esc(tname(m.wo=="h"?m.a:m.b))}، والنتيجة المعتمدة 3–0</span>`:""}<span class="tm" data-tm="${m.g}|${esc(m.b||"")}">${esc(tname(m.b))}</span></div>
  ${B.length?`<div class="badges">${B.map(b=>`<span class="bdg ${b.c}">${esc(b.t)}</span>`).join("")}</div>`:""}
  ${sc.length?`<div class="block"><h4>الأهداف</h4>${[0,1].map(sd=>sc.filter(s=>(+s.s||0)==sd).map(s=>`<div class="rk"><span>⚽ ${esc(s.n)} · ${esc(tname(sd?m.b:m.a))}</span><b>${+s.g||1}</b></div>`).join("")).join("")}</div>`:""}
  ${mv?`<div class="block"><h4>أفضل لاعب في المباراة</h4>${xx.vote&&/^https:\/\//.test(xx.vote)?`<a class="btn" style="display:inline-block;margin-bottom:8px;text-decoration:none" href="${esc(xx.vote)}" target="_blank" rel="noopener">صوّت لأفضل لاعب</a>`:""}<p class="mini" style="margin:0 0 8px">الدرجة = 70% تقييم المشرف + 30% أصوات الطلاب (${mv.tot} صوتًا)</p><div class="cands">${mv.rows.map(c=>`<div class="cand ${m.done&&c===mv.top?"top":""}">${av(c.pid,c.n)}<b>${esc(c.n)}</b><div class="mini">${esc(tname(c.s==1?m.b:m.a))}</div>${m.done?`<div class="mini">${c.score}% · ${c.votes} صوت</div><div class="bar"><i style="width:${c.score}%"></i></div>`:""}</div>`).join("")}</div></div>`:""}
@@ -518,21 +527,22 @@ function renderModal(){let ov=document.getElementById("ov");if(!MODAL){if(ov)ov.
 
 /* ---------- admin ---------- */
 function inp(path,side,v){return `<input inputmode="numeric" aria-label="أهداف" data-p="${path}" data-s="${side}" value="${esc(v??"")}">`}
+function woSel(path,m,a,b){return `<label class="wo">طريقة الحسم <select data-wo="${path}"><option value="">مباراة عادية</option><option value="h" ${m.wo=="h"?"selected":""} ${a?"":"disabled"}>انسحاب ${esc(a?tname(a):"الفريق الأول")}</option><option value="a" ${m.wo=="a"?"selected":""} ${b?"":"disabled"}>انسحاب ${esc(b?tname(b):"الفريق الثاني")}</option></select></label>`}
 function mrow(g,id,a,b,label){const m=M(g,id);return `<div class="m"><span class="t">${esc(a?tname(a):"—")}</span>${inp(g+"|"+id,"h",m.h)}<span class="x">:</span>${inp(g+"|"+id,"a",m.a)}<span class="t r">${esc(b?tname(b):"—")}</span></div>
- <div class="meta"><span>${label}</span><input aria-label="ملاحظة الموعد" placeholder="ملاحظة: الحصة / الملعب" data-p="${g}|${id}" data-s="d" value="${esc(m.d||"")}"></div>`}
+ <div class="meta"><span>${label}</span><input aria-label="ملاحظة الموعد" placeholder="ملاحظة: الحصة / الملعب" data-p="${g}|${id}" data-s="d" value="${esc(m.d||"")}"></div>${woSel(g+"|"+id,m,a,b)}`}
 function pen(g,id,a,b){const p=M(g,id);return `<div class="pen">ركلات الترجيح: ${esc(tname(a))} ${inp(g+"|"+id,"h",p.h)} – ${inp(g+"|"+id,"a",p.a)} ${esc(tname(b))}</div>`}
 function grpCard(g,i,a,b,r,extra=""){return `<div class="card grp"><div class="gh"><h3>المجموعة ${i}</h3><span class="badge ${r&&r.w?"":"wait"}">${r&&r.w?"المتأهل: "+esc(tname(r.w)):"لم تُحسم"}</span></div>${extra}${mrow(g,"G"+i+"a",a,b,"ذهاب")}${mrow(g,"G"+i+"b",b,a,"إياب")}${r&&r.tied?pen(g,"G"+i+"p",a,b):""}</div>`}
 function renderGrade(g){const G=GR[g],T=S.grades[g].teams,R=compute(g);
  let h=`<section class="sec" style="--c:${G.c}"><div><h2>${G.name}</h2><p class="note">أدخل النتائج هنا، والهدافين وأفضل لاعب من تبويب "تفاصيل المباريات".</p></div><div class="grid">`;
  for(let i=0;i<3;i++)h+=grpCard(g,i+1,T[i*2],T[i*2+1],R.g[i]);
- let ex=`<p class="note">${esc(tname(T[6]))} يواجه ${R.picked?"الفريق المحدد بالقرعة":"أفضل خاسر من المجموعات 1–3"}${R.best?": <b>"+esc(tname(R.best))+"</b>":""}.</p><label class="mini">خصم المتأهل المباشر <select class="edsel" data-pick="${g}"><option value="">تلقائي: أفضل خاسر</option>${T.slice(0,6).map(t=>`<option value="${esc(t)}" ${S.grades[g].pick==t?"selected":""}>بالقرعة: ${esc(tname(t))}</option>`).join("")}</select></label>`;
+ let ex=`<div class="setup g4ed"><label>المتأهل المباشر<input id="g4d-${g}" data-team="${g}|6" value="${esc(T[6])}"></label><label>خصمه (فرصة ثانية)<input id="g4p-${g}" data-pick="${g}" list="dl-${g}" placeholder="فارغ = أفضل خاسر تلقائيًا" value="${esc(S.grades[g].pick||"")}"><datalist id="dl-${g}">${T.slice(0,6).map(t=>`<option value="${esc(t)}">`).join("")}</datalist></label></div><p class="note">${R.picked?"الخصم محدد يدويًا":"الخصم يُحسب تلقائيًا: أفضل خاسر من المجموعات 1–3"}${R.best?": <b>"+esc(tname(R.best))+"</b>":"، ويظهر بعد حسم المجموعات الثلاث"}.</p>`;
  if(R.bestTie)ex+=`<div class="pen">تساوٍ تام بين الخاسرين، اختر نتيجة القرعة: ${R.losers.filter(x=>x.Pts==R.losers[0].Pts&&x.GD==R.losers[0].GD&&x.F==R.losers[0].F).map(x=>`<button class="btn ghost" data-draw="${g}|${esc(x.t)}">${esc(tname(x.t))}</button>`).join(" ")}</div>`;
  h+=grpCard(g,4,T[6],R.best,R.g[3],ex)+`</div><div class="bracket"><div class="card"><h3>نصف النهائي الأول</h3>${mrow(g,"S1",R.W[0],R.W[1],"مباراة واحدة")}${R.s1.tied?pen(g,"S1p",R.W[0],R.W[1]):""}</div><div class="card"><h3>نصف النهائي الثاني</h3>${mrow(g,"S2",R.W[2],R.W[3],"مباراة واحدة")}${R.s2.tied?pen(g,"S2p",R.W[2],R.W[3]):""}</div></div>
  <div class="card final"><h3>نهائي ${G.name}</h3>${mrow(g,"F",R.s1.w,R.s2.w,"النهائي")}${R.f.tied?pen(g,"Fp",R.s1.w,R.s2.w):""}</div>
- <details class="card"><summary><b>أسماء الفصول وتوزيع المجموعات</b></summary><div class="setup" style="margin-top:10px">${["م1 – أ","م1 – ب","م2 – أ","م2 – ب","م3 – أ","م3 – ب","م4 – متأهل مباشر"].map((l,i)=>`<label>${l}<input id="t-${g}-${i}" data-team="${g}|${i}" value="${esc(T[i])}"></label>`).join("")}</div></details></section>`;return h}
+ <details class="card"><summary><b>أسماء الفصول وتوزيع المجموعات</b></summary><div class="setup" style="margin-top:10px">${["م1 – أ","م1 – ب","م2 – أ","م2 – ب","م3 – أ","م3 – ب","م4 – متأهل مباشر"].map((l,i)=>`<label>${l}<input id="t-${g}-${i}" data-team="${g}|${i}" value="${esc(T[i])}"></label>`).join("")}<label>م4 – الخصم (فارغ = تلقائي)<input id="t-${g}-p" data-pick="${g}" list="dl-${g}" value="${esc(S.grades[g].pick||"")}"></label></div></details></section>`;return h}
 function renderCupEdit(){const ms=allMatches().filter(m=>m.g=="cup");const {st,fin}=clTable();
  return `<section class="sec" style="--c:var(--gold)"><div><h2>دوري الأبطال</h2><p class="note">يظهر أبطال المراحل تلقائيًا بعد نهائيات الصفوف.</p></div><div class="card setup"><label>اسم فريق المعلمين<input id="teach" data-cupname="1" value="${esc(S.cup.teachers||"المعلمون")}"></label></div><div class="grid">
- ${ms.map(m=>{const r=S.cup.m[m.id];return `<div class="card"><h3>${m.label} · المباراة ${m.id+1}</h3><div class="m"><span class="t">${esc(m.a?tname(m.a):"—")}</span>${inp("cup|"+m.id,"h",r.h)}<span class="x">:</span>${inp("cup|"+m.id,"a",r.a)}<span class="t r">${esc(m.b?tname(m.b):"—")}</span></div><div class="meta"><input aria-label="ملاحظة" placeholder="ملاحظة: الحصة / الملعب" data-p="cup|${m.id}" data-s="d" value="${esc(r.d||"")}"></div></div>`}).join("")}</div>
+ ${ms.map(m=>{const r=S.cup.m[m.id];return `<div class="card"><h3>${m.label} · المباراة ${m.id+1}</h3><div class="m"><span class="t">${esc(m.a?tname(m.a):"—")}</span>${inp("cup|"+m.id,"h",r.h)}<span class="x">:</span>${inp("cup|"+m.id,"a",r.a)}<span class="t r">${esc(m.b?tname(m.b):"—")}</span></div><div class="meta"><input aria-label="ملاحظة" placeholder="ملاحظة: الحصة / الملعب" data-p="cup|${m.id}" data-s="d" value="${esc(r.d||"")}"></div>${woSel("cup|"+m.id,r,m.a,m.b)}</div>`}).join("")}</div>
  <div class="card"><h3>الترتيب</h3>${tableHTML(st,fin)}</div>
  <div class="card"><h3>نسخة احتياطية</h3><div class="tools"><button id="cp">نسخ رمز البيانات</button><button id="ld">استيراد</button><button id="rs" class="danger">مسح كل النتائج</button></div>
  <textarea id="io" aria-label="رمز البيانات" style="width:100%;margin-top:8px;min-height:60px;font:12px monospace;background:#06100a;color:var(--chalk);border:1px solid var(--line);border-radius:8px" hidden></textarea><p id="msg" class="note"></p></div></section>`}
@@ -554,7 +564,7 @@ function renderDetails(){const ms=allMatches().filter(m=>m.a||m.b);if(!EDKEY||!m
 function setPath(o,path,v){const ps=path.split(".");let c=o;for(let i=0;i<ps.length-1;i++){c=c[ps[i]] ||= (isNaN(ps[i+1])?{}:[])}c[ps[ps.length-1]]=v}
 
 /* ---------- render ---------- */
-function stats(){let played=0,goals=0;allMatches().forEach(m=>{if(m.done){played++;goals+=m.x+m.y}});
+function stats(){let played=0,goals=0;allMatches().forEach(m=>{if(m.done){played++;if(!m.wo)goals+=m.x+m.y}});
  document.getElementById("stats").innerHTML=[["٢٢","فريقًا"],[played,"مباراة لُعبت"],[goals,"هدفًا"]].map(([a,b])=>`<div class="stat"><b>${a}</b><span>${b}</span></div>`).join("")}
 function render(){const mv=document.getElementById("mv");if(mv){mv.setAttribute("aria-pressed",MODE=="view");document.getElementById("me").setAttribute("aria-pressed",MODE=="edit")}
  stats();const tb=document.getElementById("tabs");tb.hidden=MODE=="view";
@@ -563,8 +573,8 @@ function render(){const mv=document.getElementById("mv");if(mv){mv.setAttribute(
  tb.innerHTML=tabs.map(([k,l])=>`<button role="tab" aria-selected="${TAB==k}" data-tab="${k}">${l}</button>`).join("");
  const f=document.activeElement,fid=f&&f.id,fp=f&&f.dataset&&f.dataset.p,fs=f&&f.dataset&&f.dataset.s,ft=f&&f.dataset&&f.dataset.team;
  document.getElementById("main").innerHTML=pubCard()+(TAB=="cup"?renderCupEdit():TAB=="det"?renderDetails():renderGrade(TAB));pubState();
- const el=fp?document.querySelector(`[data-p="${fp}"][data-s="${fs}"]`):ft?document.querySelector(`[data-team="${ft}"]`):fid?document.getElementById(fid):null;
- if(ft)document.querySelector("details")?.setAttribute("open","");
+ const el=fid?document.getElementById(fid):fp?document.querySelector(`[data-p="${fp}"][data-s="${fs}"]`):ft?document.querySelector(`[data-team="${ft}"]`):null;
+ if(fid&&fid.startsWith("t-"))document.querySelector("details")?.setAttribute("open","");
  if(el&&el.focus){el.focus();try{if(el.type!="checkbox"&&el.type!="datetime-local"){const L=el.value.length;el.setSelectionRange(L,L)}}catch(e){}}}
 function tickClock(){const c=document.getElementById("clock");if(!c)return;let d=Math.max(0,+c.dataset.t-Date.now())/1000;
  const u=[[Math.floor(d/86400),"يوم"],[Math.floor(d%86400/3600),"ساعة"],[Math.floor(d%3600/60),"دقيقة"],[Math.floor(d%60),"ثانية"]];
@@ -600,12 +610,14 @@ const digits=v=>v.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));
 document.addEventListener("input",e=>{const t=e.target;if(MODE!="edit")return;
  if(t.dataset.p){const [g,id]=t.dataset.p.split("|");const o=g=="cup"?S.cup.m[id]:M(g,id);o[t.dataset.s]=t.dataset.s=="d"?t.value:digits(t.value).replace(/\D/g,"");save();if(t.dataset.s!="d")render()}
  if(t.dataset.team){const [g,i]=t.dataset.team.split("|");S.grades[g].teams[i]=t.value;save();render()}
+ if(t.dataset.pick){S.grades[t.dataset.pick].pick=t.value.trim()||null;save();render()}
  if(t.dataset.cupname){S.cup.teachers=t.value;save();render()}
  if(t.dataset.x&&t.type!="file"){let v=t.type=="checkbox"?t.checked:t.value;if(/\.(g|r|v)$/.test(t.dataset.x))v=digits(v).replace(/[^\d.]/g,"");if(/\.s$/.test(t.dataset.x))v=+v;setPath(X(EDKEY),t.dataset.x,v);save();if(t.tagName=="SELECT"||t.type=="checkbox")render()}});
 document.addEventListener("change",e=>{const t=e.target;
  if(t.id=="edsel"){EDKEY=t.value;render();return}
  if(t.id=="openjson"&&t.files&&t.files[0]){t.files[0].text().then(s=>{absorb(JSON.parse(s));save();render();live("فُتح الملف.")}).catch(()=>live("الملف غير صالح."));return}
- if(t.dataset.pick){S.grades[t.dataset.pick].pick=t.value||null;save();render();return}
+ if(t.dataset.wo!=null){const [g,id]=t.dataset.wo.split("|");const o=g=="cup"?S.cup.m[id]:M(g,id);o.wo=t.value;
+  if(t.value=="h"){o.h="0";o.a="3"}else if(t.value=="a"){o.h="3";o.a="0"}save();render();return}
  if(t.dataset.photo!=null&&t.files&&t.files[0]){const i=+t.dataset.photo,file=t.files[0],msg=document.getElementById("phmsg");msg.textContent="جارٍ تجهيز الصورة…";
   const img=new Image();img.onload=async()=>{const sz=220,cv=document.createElement("canvas");const s=Math.min(img.width,img.height);cv.width=cv.height=sz;
    cv.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,sz,sz);const d=cv.toDataURL("image/jpeg",.82);URL.revokeObjectURL(img.src);
