@@ -362,7 +362,7 @@ async function load(){if(ADMIN){let loc=null;try{loc=JSON.parse(localStorage.get
  try{absorb(await fetchRemote());live("النتائج"+stamp())}catch(e){live("تعذّر تحميل النتائج، أعد تحميل الصفحة.")}render()}
 load();if(!ADMIN)setInterval(async()=>{if(MODAL)return;try{const d=await fetchRemote();if(d.updated!==S.updated){absorb(d);live("النتائج"+stamp());render()}}catch(e){}},120000);
 function pubState(){const el=document.getElementById("pubst");if(el)el.textContent=DIRTY?"لديك تعديلات لم تُنشر بعد.":"لا تعديلات جديدة."}
-function pubCard(){return `<div class="card" style="border:1px solid var(--gold);margin-bottom:14px"><h3>نشر النتائج</h3><p class="note">تعديلاتك تُحفظ في هذا الجهاز تلقائيًا. للنشر: نزّل ملف النتائج وارفعه إلى المستودع بدل الملف القديم، فيظهر للطلاب خلال دقائق. <b id="pubst"></b></p>
+function pubCard(){return `<div class="card" style="border:1px solid var(--gold);margin-bottom:14px"><h3>نشر النتائج <span class=\"mini\" style=\"font-weight:400\">· إصدار الصفحة 21 أكتوبر</span></h3><p class="note">تعديلاتك تُحفظ في هذا الجهاز تلقائيًا. للنشر: نزّل ملف النتائج وارفعه إلى المستودع بدل الملف القديم، فيظهر للطلاب خلال دقائق. <b id="pubst"></b></p>
  <div class="tools" style="margin-top:8px"><button id="dl">تنزيل results.json</button><button id="fromsite">تحميل النسخة المنشورة</button><label class="btn ghost" style="cursor:pointer">فتح ملف من الجهاز<input type="file" accept=".json,application/json" id="openjson" hidden></label></div></div>`}
 
 /* ---------- tournament logic ---------- */
