@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>إدارة · دوري المدرسة لكرة القدم</title>
+<meta name="robots" content="noindex">
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;900&display=swap">
 <style>
 /* Layout: floodlit stadium night. Pitch-striped hero with field markings, scoreboard-style bracket per grade, gold champions-league finale. Single dark look by design. */
@@ -266,6 +268,42 @@ img{max-width:100%}
 .wo select{font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:8px;background:#06100a;color:var(--chalk)}
 .g4ed{margin-bottom:6px}
 .mvp+.mvp{border-top:none;padding-top:0}
+/* jump nav */
+.jump{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:flex;gap:6px;overflow-x:auto;padding:8px;margin-top:14px;background:rgba(7,19,13,.92);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;scrollbar-width:none}
+.jump::-webkit-scrollbar{display:none}
+.jump button{flex:none;font:inherit;font-weight:700;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--chalk);border-radius:999px;padding:6px 14px;cursor:pointer}
+.jump button:hover{border-color:var(--gold);color:var(--gold)}
+.gsec{scroll-margin-top:72px}
+.fix[data-open]{cursor:pointer}
+/* schedule */
+.day{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:10px}
+.day.today{border-color:var(--win);box-shadow:0 0 18px rgba(47,210,122,.15)}
+.dh{padding:8px 14px;font-weight:700;color:var(--gold);background:rgba(0,0,0,.25);border-bottom:1px solid var(--line)}
+.day.today .dh{color:var(--win)}
+.srow{display:grid;grid-template-columns:70px minmax(0,1fr) minmax(0,auto);gap:10px;align-items:center;padding:8px 14px;border-inline-start:4px solid var(--c);cursor:pointer}
+.srow+.srow{border-top:1px solid var(--line)}
+.srow:hover{background:rgba(255,255,255,.03)}
+.srow .st{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.srow .sm{font-weight:700;overflow-wrap:anywhere}.srow .sm b{color:var(--gold);margin:0 6px}
+.srow .sg{font-size:12px;color:var(--muted);text-align:left}
+@media(max-width:560px){.srow{grid-template-columns:58px minmax(0,1fr)}.srow .sg{grid-column:2;text-align:right}}
+.pastd{margin-top:12px}.pastd summary{cursor:pointer;color:var(--muted);font-weight:700;padding:6px 0}
+/* stage numbers */
+.fun .fs{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.fun b{display:block}
+/* roster */
+.roster{display:flex;flex-wrap:wrap;gap:6px}.roster span{font-size:13px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.rgrid label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:13px}
+.rgrid textarea{font:inherit;font-weight:400;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#06100a;color:var(--chalk);resize:vertical}
+/* scorer slots */
+.scb{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.scg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+@media(max-width:560px){.scg{grid-template-columns:1fr}}
+.scs{display:flex;flex-direction:column;gap:4px;min-width:0}
+.scs input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#06100a;color:var(--chalk);min-width:0}
+.scs input.extra{border-color:#ff7b6b}
+.warn{margin-top:6px;font-size:12px;line-height:1.5;color:#ffb4a8;background:rgba(255,123,107,.1);border:1px solid rgba(255,123,107,.4);border-radius:8px;padding:6px 8px}
 </style>
 <style>html,body{margin:0}</style>
 </head>
@@ -337,7 +375,7 @@ function makeTrophy(W,H){const T=THREE;
 const GR={g3:{name:"ثالث ثانوي",c:"var(--g3)",base:30,n:"٣"},g2:{name:"ثاني ثانوي",c:"var(--g2)",base:20,n:"٢"},g1:{name:"أول ثانوي",c:"var(--g1)",base:10,n:"١"}};
 const GK=Object.keys(GR);
 const ORDER={g3:["34","35","31","33","32","36","37"],g2:["23","26","21","27","24","25","22"],g1:["14","15","11","13","12","16","17"]};
-function blank(){const s={grades:{},cup:{m:[{},{},{},{},{},{}],teachers:"المعلمون"},x:{}};for(const k of GK){s.grades[k]={teams:[...ORDER[k]],m:{}}}return s}
+function blank(){const s={grades:{},cup:{m:[{},{},{},{},{},{}],teachers:"المعلمون"},x:{},rost:{}};for(const k of GK){s.grades[k]={teams:[...ORDER[k]],m:{}}}return s}
 let S=blank(),MODE="view",TAB="g3",EDKEY="",REF=null,DB=null,USER=null,ME=null,isAdmin=false,timer=null,lastSent="",LOADED=false;
 let VOTES={},PREDS={},PHOTOS={},NAMES={},MODAL=null;
 const n=v=>v===""||v==null?null:+v;
@@ -350,9 +388,9 @@ function live(s){const el=document.getElementById("live");if(el)el.textContent=s
 
 /* ---------- persistence (GitHub Pages: results.json) ---------- */
 const ADMIN=!!window.LEAGUE_ADMIN,LSK="school-league-admin-v1";let DIRTY=false;
-function payload(){return {grades:S.grades,cup:S.cup,x:S.x,photos:S.photos||{},updated:new Date().toISOString()}}
+function payload(){return {grades:S.grades,cup:S.cup,x:S.x,rost:S.rost||{},photos:S.photos||{},updated:new Date().toISOString()}}
 function save(){if(!ADMIN)return;DIRTY=true;try{localStorage.setItem(LSK,JSON.stringify(payload()))}catch(e){}pubState()}
-function absorb(d){const b=blank();S.grades=d.grades||b.grades;S.cup=d.cup||b.cup;S.x=d.x||{};S.photos=d.photos||{};S.updated=d.updated||"";while(S.cup.m.length<6)S.cup.m.push({});
+function absorb(d){const b=blank();S.grades=d.grades||b.grades;S.cup=d.cup||b.cup;S.x=d.x||{};S.rost=d.rost||{};S.photos=d.photos||{};S.updated=d.updated||"";while(S.cup.m.length<6)S.cup.m.push({});
  for(const g of GK){S.grades[g] ||= b.grades[g]}PHOTOS=S.photos}
 async function fetchRemote(){const r=await fetch("results.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json()}
 function stamp(){if(!S.updated)return "";try{return " · آخر تحديث "+new Date(S.updated).toLocaleString("ar-SA-u-ca-gregory-nu-arab",{day:"numeric",month:"long",hour:"numeric",minute:"2-digit"})}catch(e){return ""}}
@@ -408,16 +446,24 @@ function allMatches(){const L=[];
 function findM(key){return allMatches().find(m=>m.key==key)}
 
 /* ---------- awards ---------- */
+const NN=s=>String(s||"").trim().replace(/\s+/g," ");
+function goalsBy(key){const o={};(X(key).sc||[]).forEach(s=>{const nm=NN(s&&s.n);if(!nm)return;const sd=+s.s?1:0,k=sd+"|"+nm;(o[k] ||= {n:nm,s:sd,g:0}).g+=Math.max(1,+s.g||1)});return Object.values(o)}
+function slotsOf(key,H,A){const L=[[],[]];(X(key).sc||[]).forEach(s=>{if(!s)return;const k=+s.s?1:0,g=Math.max(1,+s.g||1);for(let i=0;i<g;i++)L[k].push(s.n||"")});
+ const fit=(arr,c)=>{arr=arr.slice();while(arr.length>c){const j=arr.lastIndexOf("");if(j<0)break;arr.splice(j,1)}while(arr.length<c)arr.push("");return arr};return [fit(L[0],H),fit(L[1],A)]}
+const gw=(k,acc)=>k==1?(acc?"هدفًا واحدًا":"هدف واحد"):k==2?(acc?"هدفين":"هدفان"):k>=3&&k<=10?k+" أهداف":k+" هدفًا";
+function fmtT(t){if(!t)return "";const [h,mi]=t.split(":").map(Number);return (h%12||12)+":"+String(mi).padStart(2,"0")+(h<12?" ص":" م")}
+function fmtD(d){try{return new Date(d+"T12:00").toLocaleDateString("ar-SA-u-ca-gregory-nu-arab",{weekday:"long",day:"numeric",month:"long"})}catch(e){return d}}
+function todayKey(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function voteTally(key){const t={};let tot=0;(X(key).cand||[]).forEach((c,i)=>{const v=Math.max(0,+(c&&c.v)||0);t[i]=v;tot+=v});return {t,tot}}
 function mvpOf(key){const c=(X(key).cand||[]).filter(x=>x&&x.n);if(!c.length)return null;const {t,tot}=voteTally(key);
  const rows=c.map((p,i)=>{const share=tot?(t[i]||0)/tot:0,r=Math.max(0,Math.min(10,+p.r||0));return {...p,i,votes:t[i]||0,share,score:Math.round((0.7*r/10+0.3*share)*1000)/10}});
  rows.sort((a,b)=>b.score-a.score);return {rows,tot,top:rows[0]}}
 function stageAwards(g){const ms=allMatches().filter(m=>m.g==g);const sc={},pl={};
- ms.forEach(m=>{(X(m.key).sc||[]).forEach(s=>{if(!s||!s.n)return;const team=s.s==1?m.b:m.a;const k=s.n+"|"+team;(sc[k] ||= {n:s.n,team,g:0}).g+=(+s.g||0)});
-  if(m.done){const mv=mvpOf(m.key);if(mv&&mv.top){const p=mv.top,team=p.s==1?m.b:m.a,k=p.n+"|"+team;const o=(pl[k] ||= {n:p.n,team,mvp:0,pts:0,pid:null});o.mvp++;o.pts+=p.score;if(p.pid)o.pid=p.pid}}});
+ ms.forEach(m=>{goalsBy(m.key).forEach(s=>{const team=s.s==1?m.b:m.a;const k=s.n+"|"+team;(sc[k] ||= {n:s.n,team,g:0}).g+=(+s.g||0)});
+  if(m.done){const mv=mvpOf(m.key);if(mv&&mv.top){const p=mv.top,team=+p.s==1?m.b:m.a,k=NN(p.n)+"|"+team;const o=(pl[k] ||= {n:p.n,team,mvp:0,pts:0,pid:null});o.mvp++;o.pts+=p.score;if(p.pid)o.pid=p.pid}}});
  return {scorers:Object.values(sc).sort((a,b)=>b.g-a.g).slice(0,5),players:Object.values(pl).sort((a,b)=>b.mvp-a.mvp||b.pts-a.pts).slice(0,3)}}
 function badgesOf(m){const B=[];if(!m.done)return B;if(m.wo){B.push({t:"فوز بالانسحاب: "+tname(m.wo=="h"?m.b:m.a),c:"bw"});return B}
- (X(m.key).sc||[]).forEach(s=>{if(s&&+s.g>=3)B.push({t:"هاتريك: "+s.n,c:""})});
+ goalsBy(m.key).forEach(s=>{if(s.g>=3)B.push({t:"هاتريك: "+s.n,c:""})});
  if(m.y===0)B.push({t:"شباك نظيفة: "+tname(m.a),c:"cs"});if(m.x===0)B.push({t:"شباك نظيفة: "+tname(m.b),c:"cs"});
  if(Math.abs(m.x-m.y)>=3)B.push({t:"فوز عريض",c:"bw"});return B}
 function funStats(g){const ms=allMatches().filter(m=>m.g==g&&m.done&&!m.wo);if(!ms.length)return null;const t={};
@@ -448,7 +494,7 @@ function awardsHTML(g){const A=stageAwards(g),F=funStats(g);const best=A.players
  return `<div class="awards">
  <div class="aw"><h4>⭐ أفضل لاعب في ${GR[g].name}</h4>${best?`<div class="lead1">${av(best.pid,best.n)}<div><b>${esc(best.n)}</b><small>${esc(tname(best.team))} · أفضل لاعب في ${best.mvp} ${best.mvp==1?"مباراة":"مباريات"}</small></div></div>${A.players.slice(1).map(p=>`<div class="rk"><span>${esc(p.n)} · ${esc(tname(p.team))}</span><b>${p.mvp}</b></div>`).join("")}`:`<p class="note">يظهر بعد أول مباراة يُختار فيها أفضل لاعب.</p>`}</div>
  <div class="aw"><h4>⚽ الهدّافون</h4>${A.scorers.length?A.scorers.map((s,i)=>`<div class="rk"><span>${i==0?"👟 ":""}${esc(s.n)} · ${esc(tname(s.team))}</span><b>${s.g}</b></div>`).join(""):`<p class="note">لا أهداف مسجّلة بعد.</p>`}</div>
- <div class="aw"><h4>📊 أرقام المرحلة</h4>${F?`<div class="fun"><div><small>أقوى هجوم</small><b>${esc(tname(F.att.id))}</b> · ${F.att.F} هدفًا</div><div><small>أصلب دفاع</small><b>${esc(tname(F.def.id))}</b> · ${F.def.A} عليه</div><div><small>أكبر فوز</small><b>${esc(tshort(F.big.a))} <bdi>${F.big.x}</bdi>–<bdi>${F.big.y}</bdi> ${esc(tshort(F.big.b))}</b></div><div><small>أغزر مباراة</small><b>${F.hi.x+F.hi.y} أهداف</b></div></div>`:`<p class="note">تظهر الأرقام بعد أول نتيجة.</p>`}</div>
+ <div class="aw"><h4>📊 أرقام المرحلة</h4>${F?`<div class="fun"><div><small>أقوى هجوم</small><b>${esc(tname(F.att.id))}</b><span class="fs">سجّل ${gw(F.att.F,1)}</span></div><div><small>أصلب دفاع</small><b>${esc(tname(F.def.id))}</b><span class="fs">${F.def.A?"استقبل "+gw(F.def.A,1):"لم تُهز شباكه"}</span></div><div><small>أكبر فوز</small><b>${esc(tname(F.big.x>=F.big.y?F.big.a:F.big.b))}</b><span class="fs">على ${esc(tname(F.big.x>=F.big.y?F.big.b:F.big.a))} بنتيجة <bdi dir="ltr">${Math.max(F.big.x,F.big.y)}–${Math.min(F.big.x,F.big.y)}</bdi></span></div><div><small>أغزر مباراة</small><b>${gw(F.hi.x+F.hi.y)}</b><span class="fs">${esc(tname(F.hi.a))} × ${esc(tname(F.hi.b))}</span></div></div>`:`<p class="note">تظهر الأرقام بعد أول نتيجة.</p>`}</div>
  </div>`}
 function viewGrade(g){const G=GR[g],T=S.grades[g].teams,R=compute(g);
  return `<section class="gsec" style="--c:${G.c}" id="sec-${g}"><div class="shead"><span class="badge">${G.n}</span><div><h2>${G.name}</h2><p>7 فصول · 4 مجموعات · نصف النهائي · النهائي — اضغط على أي مباراة أو فصل للتفاصيل</p></div><span class="rule"></span></div>
@@ -495,12 +541,26 @@ function viewUpcoming(){const up=upcomingList().slice(0,8);if(!up.length)return 
 function viewPreds(){const B=predBoard();
  return `<section class="gsec"><div class="shead" style="--c:var(--g2)"><span class="badge">🔮</span><div><h2>ترتيب المتوقّعين</h2><p>النتيجة الدقيقة 3 نقاط · الفائز أو التعادل الصحيح نقطة</p></div><span class="rule"></span></div>
  <div class="aw" style="--c:var(--g2)">${B.length?B.map((r,i)=>`<div class="rk"><span>${i+1}. ${esc(NAMES[r.u]||"مشارك")}${r.u==ME?" (أنت)":""} · ${r.ex} دقيقة</span><b>${r.pts}</b></div>`).join(""):`<p class="note">يظهر الترتيب بعد أول مباراة فيها توقعات.</p>`}</div></section>`}
-function viewAll(){return viewTop()+viewUpcoming()+GK.map(viewGrade).join("")+viewCL()+
- `<section class="gsec rules"><h3>نظام الدوري</h3><ol><li>كل مرحلة: 7 فصول في 4 مجموعات، ذهاب وإياب، ويتأهل صاحب مجموع الأهداف الأعلى، وعند التساوي ركلات الترجيح.</li><li>المجموعة 4: متأهل مباشر ضد خاسر من المجموعات 1–3 يُحدَّد بالقرعة، أو أفضل خاسر (النقاط، ثم فارق الأهداف، ثم الأهداف المسجلة).</li><li>نصف النهائي والنهائي مباراة واحدة، وعند التعادل ركلات ترجيح.</li><li>دوري الأبطال: أبطال المراحل الثلاث وفريق المعلمين، كل فريق يلعب ضد الآخرين مرة واحدة.</li><li>أفضل لاعب في المباراة: 70% تقييم المشرف (من 10) و30% نسبة أصوات الطلاب. أفضل لاعب في المرحلة هو الأكثر فوزًا بلقب أفضل لاعب في المباراة، ثم الأعلى في مجموع الدرجات.</li><li>تنطلق المباريات الساعة 9:30 صباحًا ما لم يُعلَن موعد آخر.</li></ol></section><section class="gsec rules"><h3>شروط المشاركة</h3><ol><li>يسلّم كل فصل قائمة لاعبيه إلى إدارة الدوري قبل انطلاقه، ولا يجوز تعديلها حتى نهاية الدور الأول.</li><li>لا يُسمح باللعب بالسراويل القصيرة (الشورت).</li><li>لا يُسمح باللعب حافي القدمين.</li><li>يُستبعد من الدوري بالكامل كل لاعب يرتكب مخالفة سلوكية أو أخلاقية، ولا يقتصر الاستبعاد على مباراة واحدة.</li></ol></section>`}
+function jumpNav(){return `<nav class="jump" aria-label="أقسام الصفحة">${[["sec-today","اليوم"],["sec-sched","الجدول"],["sec-g3","ثالث ثانوي"],["sec-g2","ثاني ثانوي"],["sec-g1","أول ثانوي"],["sec-cl","دوري الأبطال"],["sec-rules","الأنظمة"]].map(([i,l])=>`<button data-jump="${i}">${l}</button>`).join("")}</nav>`}
+function fixCard(m){const t=m.dt?m.dt.slice(11,16):"";return `<div class="fix" style="--c:${m.c}" data-open="${m.key}"><div class="note">${esc(m.gname)} · ${esc(m.label)}</div><div class="vs">${esc(tname(m.a))}<i>${m.done?`<bdi dir="ltr">${m.y} – ${m.x}</bdi>`:"ضد"}</i>${esc(tname(m.b))}</div><div class="note">${m.done?(m.wo?"فوز بالانسحاب":"انتهت"):(t?"الساعة "+fmtT(t):"")}${m.note?" · "+esc(m.note):""}</div></div>`}
+function viewToday(){const all=allMatches(),tk=todayKey();let L=all.filter(m=>m.dt&&m.dt.slice(0,10)==tk),title="مباريات اليوم",sub=fmtD(tk);
+ if(!L.length){const ds=[...new Set(all.filter(m=>m.done&&m.dt&&m.dt.slice(0,10)<=tk).map(m=>m.dt.slice(0,10)))].sort();const d=ds.pop();if(d){L=all.filter(m=>m.done&&m.dt&&m.dt.slice(0,10)==d);title="آخر النتائج";sub=fmtD(d)}}
+ L.sort((a,b)=>(a.dt||"").localeCompare(b.dt||""));
+ return `<section class="gsec" id="sec-today"><div class="shead" style="--c:var(--win)"><span class="badge">⚽</span><div><h2>${title}</h2><p>${esc(sub)}</p></div><span class="rule"></span></div>${L.length?`<div class="up">${L.map(fixCard).join("")}</div>`:`<p class="note">لا مباريات اليوم.</p>`}</section>`}
+function viewSchedule(){const all=allMatches().filter(m=>m.dt),und=allMatches().filter(m=>!m.dt&&!m.done&&m.a&&m.b).length,tk=todayKey(),by={};
+ all.forEach(m=>(by[m.dt.slice(0,10)] ||= []).push(m));const days=Object.keys(by).sort();
+ const day=d=>`<div class="day ${d==tk?"today":""}"><div class="dh">${esc(fmtD(d))}${d==tk?" · اليوم":""}</div>${by[d].sort((x,y)=>x.dt.localeCompare(y.dt)).map(m=>`<div class="srow" data-open="${m.key}" style="--c:${m.c}"><span class="st">${m.done?(m.wo?"انسحاب":"انتهت"):fmtT(m.dt.slice(11,16))}</span><span class="sm">${esc(tname(m.a))} <b>${m.done?`<bdi dir="ltr">${m.y} – ${m.x}</bdi>`:"×"}</b> ${esc(tname(m.b))}</span><span class="sg">${esc(m.gname)} · ${esc(m.label)}</span></div>`).join("")}</div>`;
+ const past=days.filter(d=>d<tk),next=days.filter(d=>d>=tk);
+ return `<section class="gsec" id="sec-sched"><div class="shead" style="--c:var(--g2)"><span class="badge">📅</span><div><h2>جدول المباريات</h2><p>الانطلاق 9:30 صباحًا ما لم يُذكر غير ذلك · اضغط على المباراة للتفاصيل</p></div><span class="rule"></span></div>
+ ${next.length?next.map(day).join(""):`<p class="note">لا مباريات قادمة محددة الموعد حاليًا.</p>`}
+ ${past.length?`<details class="pastd"><summary>المباريات السابقة (${past.reduce((s,d)=>s+by[d].length,0)})</summary>${past.slice().reverse().map(day).join("")}</details>`:""}
+ ${und?`<p class="note" style="margin-top:8px">${und} مباراة لم يُحدَّد موعدها بعد.</p>`:""}</section>`}
+function viewAll(){return viewTop()+jumpNav()+viewToday()+viewSchedule()+GK.map(viewGrade).join("")+viewCL()+
+ `<section class="gsec rules" id="sec-rules"><h3>نظام الدوري</h3><ol><li>كل مرحلة: 7 فصول في 4 مجموعات، ذهاب وإياب، ويتأهل صاحب مجموع الأهداف الأعلى، وعند التساوي ركلات الترجيح.</li><li>المجموعة 4: متأهل مباشر ضد خاسر من المجموعات 1–3 يُحدَّد بالقرعة، أو أفضل خاسر (النقاط، ثم فارق الأهداف، ثم الأهداف المسجلة).</li><li>نصف النهائي والنهائي مباراة واحدة، وعند التعادل ركلات ترجيح.</li><li>دوري الأبطال: أبطال المراحل الثلاث وفريق المعلمين، كل فريق يلعب ضد الآخرين مرة واحدة.</li><li>أفضل لاعب في المباراة: 70% تقييم المشرف (من 10) و30% نسبة أصوات الطلاب. أفضل لاعب في المرحلة هو الأكثر فوزًا بلقب أفضل لاعب في المباراة، ثم الأعلى في مجموع الدرجات.</li><li>تنطلق المباريات الساعة 9:30 صباحًا ما لم يُعلَن موعد آخر.</li></ol></section><section class="gsec rules"><h3>شروط المشاركة</h3><ol><li>يسلّم كل فصل قائمة لاعبيه إلى إدارة الدوري قبل انطلاقه، ولا يجوز تعديلها حتى نهاية الدور الأول.</li><li>لا يُسمح باللعب بالسراويل القصيرة (الشورت).</li><li>لا يُسمح باللعب حافي القدمين.</li><li>يُستبعد من الدوري بالكامل كل لاعب يرتكب مخالفة سلوكية أو أخلاقية، ولا يقتصر الاستبعاد على مباراة واحدة.</li></ol></section>`}
 
 /* ---------- modals ---------- */
 function matchModal(key){const m=findM(key);if(!m)return "";const xx=X(key),mv=mvpOf(key),B=badgesOf(m);
- const sc=(xx.sc||[]).filter(s=>s&&s.n);const myV=ME&&VOTES[ME]?VOTES[ME][key]:undefined;
+ const sc=goalsBy(key);const myV=ME&&VOTES[ME]?VOTES[ME][key]:undefined;
  const voteOpen=m.done&&!xx.lock&&ME&&DB;
  return `<div class="mini">${esc(m.gname)} · ${esc(m.label)}${m.dt?" · "+esc(fmtDT(m.dt)):""}${m.note?" · "+esc(m.note):""}</div>
  <div class="score"><span class="tm" data-tm="${m.g}|${esc(m.a||"")}">${esc(tname(m.a))}</span><span class="res">${m.done?m.y+" – "+m.x:"vs"}</span>${m.wo?`<span class="mini" style="grid-column:1/-1">انسحب ${esc(tname(m.wo=="h"?m.a:m.b))}، والنتيجة المعتمدة 3–0</span>`:""}<span class="tm" data-tm="${m.g}|${esc(m.b||"")}">${esc(tname(m.b))}</span></div>
@@ -513,13 +573,13 @@ function teamModal(g,id){const ms=allMatches().filter(m=>(m.g==g||(g!="cup"&&fal
  const cl=allMatches().filter(m=>m.g=="cup"&&(m.a==id||m.b==id)&&g!="cup");const all=[...ms,...cl];
  let W=0,D=0,L=0,F=0,A=0;const scorers={};const bd={};
  all.forEach(m=>{if(m.done){const me=m.a==id?m.x:m.y,op=m.a==id?m.y:m.x;F+=me;A+=op;me>op?W++:me<op?L++:D++;if(op===0)bd["شباك نظيفة"]=(bd["شباك نظيفة"]||0)+1}
-  (X(m.key).sc||[]).forEach(s=>{if(s&&s.n&&((s.s==1?m.b:m.a)==id)){scorers[s.n]=(scorers[s.n]||0)+(+s.g||0);if(+s.g>=3)bd["هاتريك"]=(bd["هاتريك"]||0)+1}})});
+  goalsBy(m.key).forEach(s=>{if(s&&s.n&&((s.s==1?m.b:m.a)==id)){scorers[s.n]=(scorers[s.n]||0)+(+s.g||0);if(+s.g>=3)bd["هاتريك"]=(bd["هاتريك"]||0)+1}})});
  const c=g=="cup"?"var(--gold)":GR[g].c;
  return `<div style="text-align:center">${shirt(tshort(id),c).replace('class="shirt"','class="shirt" style="width:80px;height:80px;color:'+c+'"')}<h2 style="font-family:var(--f-display);font-weight:400;margin:4px 0">${esc(tname(id))}</h2><div class="mini">${g=="cup"?"دوري الأبطال":GR[g].name}</div></div>
  <div class="fun" style="margin-top:12px;grid-template-columns:repeat(5,1fr)"><div><small>فاز</small><b>${W}</b></div><div><small>تعادل</small><b>${D}</b></div><div><small>خسر</small><b>${L}</b></div><div><small>له</small><b>${F}</b></div><div><small>عليه</small><b>${A}</b></div></div>
  ${Object.keys(bd).length?`<div class="badges" style="margin-top:10px">${Object.entries(bd).map(([k,v])=>`<span class="bdg">${k} ×${v}</span>`).join("")}</div>`:""}
  <div class="block"><h4>المشوار</h4>${all.length?all.map(m=>`<div class="rk" data-open="${m.key}" style="cursor:pointer"><span>${esc(m.label)} · ضد ${esc(tname(m.a==id?m.b:m.a))}</span><b>${m.done?(m.a==id?m.x+"–"+m.y:m.y+"–"+m.x):"—"}</b></div>`).join(""):`<p class="mini">لا مباريات بعد.</p>`}</div>
- ${Object.keys(scorers).length?`<div class="block"><h4>هدّافو الفريق</h4>${Object.entries(scorers).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="rk"><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>`:""}`}
+ ${Object.keys(scorers).length?`<div class="block"><h4>هدّافو الفريق</h4>${Object.entries(scorers).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="rk"><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>`:""}${((S.rost||{})[id]||[]).length?`<div class="block"><h4>قائمة اللاعبين (${S.rost[id].length})</h4><div class="roster">${S.rost[id].map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`:""}`}
 function renderModal(){let ov=document.getElementById("ov");if(!MODAL){if(ov)ov.remove();return}
  if(!ov){ov=document.createElement("div");ov.id="ov";ov.className="ov";ov.innerHTML=`<div class="md" role="dialog" aria-modal="true"><button class="x" data-close aria-label="إغلاق">✕</button><div id="mdb"></div></div>`;document.body.appendChild(ov)}
  const f=document.activeElement&&document.activeElement.id;
@@ -528,13 +588,20 @@ function renderModal(){let ov=document.getElementById("ov");if(!MODAL){if(ov)ov.
 
 /* ---------- admin ---------- */
 function inp(path,side,v){return `<input inputmode="numeric" aria-label="أهداف" data-p="${path}" data-s="${side}" value="${esc(v??"")}">`}
+function rosterLists(){const ids=[...new Set([...GK.flatMap(g=>S.grades[g].teams),"T"])];return ids.map(id=>`<datalist id="ro-${esc(id)}">${((S.rost||{})[id]||[]).map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`).join("")}
+function scorerBox(key,a,b,m){const H=n(m.h),A=n(m.a);if(m.wo||H===null||A===null||!a||!b)return "";if(H+A==0)return `<div class="scb"><span class="mini">لا أهداف في هذه المباراة.</span></div>`;
+ const L=slotsOf(key,H,A),cnt=[H,A];
+ const side=(k,t)=>(cnt[k]||L[k].length)?`<div class="scs"><span class="mini">أهداف ${esc(tname(t))}</span>${L[k].map((nm,i)=>`<input id="sc-${key}-${k}-${i}" data-sc="${key}|${k}|${i}" list="ro-${esc(t)}" placeholder="الهدف ${i+1}: اسم اللاعب" value="${esc(nm)}" class="${i>=cnt[k]?"extra":""}">`).join("")}</div>`:"";
+ const warn=[0,1].filter(k=>L[k].length>cnt[k]).map(k=>`أسماء أهداف ${tname(k?b:a)} أكثر من نتيجته (${L[k].length} أسماء والنتيجة ${cnt[k]}). امسح الاسم الزائد المؤشَّر بالأحمر، أو صحّح النتيجة.`).join(" ");
+ const blank=L[0].slice(0,H).filter(x=>!NN(x)).length+L[1].slice(0,A).filter(x=>!NN(x)).length;
+ return `<div class="scb"><div class="mini">الهدّافون ${warn?"· تحتاج مراجعة":blank?`· باقي ${blank} بلا اسم`:"✓ مكتملة"}</div><div class="scg">${side(0,a)}${side(1,b)}</div>${warn?`<div class="warn">${esc(warn)}</div>`:""}</div>`}
 function woSel(path,m,a,b){return `<label class="wo">طريقة الحسم <select data-wo="${path}"><option value="">مباراة عادية</option><option value="h" ${m.wo=="h"?"selected":""} ${a?"":"disabled"}>انسحاب ${esc(a?tname(a):"الفريق الأول")}</option><option value="a" ${m.wo=="a"?"selected":""} ${b?"":"disabled"}>انسحاب ${esc(b?tname(b):"الفريق الثاني")}</option></select></label>`}
 function mrow(g,id,a,b,label){const m=M(g,id);return `<div class="m"><span class="t">${esc(a?tname(a):"—")}</span>${inp(g+"|"+id,"h",m.h)}<span class="x">:</span>${inp(g+"|"+id,"a",m.a)}<span class="t r">${esc(b?tname(b):"—")}</span></div>
- <div class="meta"><span>${label}</span><input aria-label="ملاحظة الموعد" placeholder="ملاحظة: الحصة / الملعب" data-p="${g}|${id}" data-s="d" value="${esc(m.d||"")}"></div>${woSel(g+"|"+id,m,a,b)}`}
+ <div class="meta"><span>${label}</span><input aria-label="ملاحظة الموعد" placeholder="ملاحظة: الحصة / الملعب" data-p="${g}|${id}" data-s="d" value="${esc(m.d||"")}"></div>${woSel(g+"|"+id,m,a,b)}${scorerBox(g+"|"+id,a,b,m)}`}
 function pen(g,id,a,b){const p=M(g,id);return `<div class="pen">ركلات الترجيح: ${esc(tname(a))} ${inp(g+"|"+id,"h",p.h)} – ${inp(g+"|"+id,"a",p.a)} ${esc(tname(b))}</div>`}
 function grpCard(g,i,a,b,r,extra=""){return `<div class="card grp"><div class="gh"><h3>المجموعة ${i}</h3><span class="badge ${r&&r.w?"":"wait"}">${r&&r.w?"المتأهل: "+esc(tname(r.w)):"لم تُحسم"}</span></div>${extra}${mrow(g,"G"+i+"a",a,b,"ذهاب")}${mrow(g,"G"+i+"b",b,a,"إياب")}${r&&r.tied?pen(g,"G"+i+"p",a,b):""}</div>`}
-function renderGrade(g){const G=GR[g],T=S.grades[g].teams,R=compute(g);
- let h=`<section class="sec" style="--c:${G.c}"><div><h2>${G.name}</h2><p class="note">أدخل النتائج هنا، والهدافين وأفضل لاعب من تبويب "تفاصيل المباريات".</p></div><div class="grid">`;
+function renderGrade(g){if(g=="ros")return rosterLists()+renderRosters();const G=GR[g],T=S.grades[g].teams,R=compute(g);
+ let h=rosterLists()+`<section class="sec" style="--c:${G.c}"><div><h2>${G.name}</h2><p class="note">أدخل النتيجة، فتظهر تحتها خانات الهدّافين بعدد الأهداف. الموعد وأفضل لاعب من تبويب "تفاصيل المباريات".</p></div><div class="grid">`;
  for(let i=0;i<3;i++)h+=grpCard(g,i+1,T[i*2],T[i*2+1],R.g[i]);
  let ex=`<div class="setup g4ed"><label>المتأهل المباشر<input id="g4d-${g}" data-team="${g}|6" value="${esc(T[6])}"></label><label>خصمه (فرصة ثانية)<input id="g4p-${g}" data-pick="${g}" list="dl-${g}" placeholder="فارغ = أفضل خاسر تلقائيًا" value="${esc(S.grades[g].pick||"")}"><datalist id="dl-${g}">${T.slice(0,6).map(t=>`<option value="${esc(t)}">`).join("")}</datalist></label></div><p class="note">${R.picked?"الخصم محدد يدويًا":"الخصم يُحسب تلقائيًا: أفضل خاسر من المجموعات 1–3"}${R.best?": <b>"+esc(tname(R.best))+"</b>":"، ويظهر بعد حسم المجموعات الثلاث"}.</p>`;
  if(R.bestTie)ex+=`<div class="pen">تساوٍ تام بين الخاسرين، اختر نتيجة القرعة: ${R.losers.filter(x=>x.Pts==R.losers[0].Pts&&x.GD==R.losers[0].GD&&x.F==R.losers[0].F).map(x=>`<button class="btn ghost" data-draw="${g}|${esc(x.t)}">${esc(tname(x.t))}</button>`).join(" ")}</div>`;
@@ -542,8 +609,8 @@ function renderGrade(g){const G=GR[g],T=S.grades[g].teams,R=compute(g);
  <div class="card final"><h3>نهائي ${G.name}</h3>${mrow(g,"F",R.s1.w,R.s2.w,"النهائي")}${R.f.tied?pen(g,"Fp",R.s1.w,R.s2.w):""}</div>
  <details class="card"><summary><b>أسماء الفصول وتوزيع المجموعات</b></summary><div class="setup" style="margin-top:10px">${["م1 – أ","م1 – ب","م2 – أ","م2 – ب","م3 – أ","م3 – ب","م4 – متأهل مباشر"].map((l,i)=>`<label>${l}<input id="t-${g}-${i}" data-team="${g}|${i}" value="${esc(T[i])}"></label>`).join("")}<label>م4 – الخصم (فارغ = تلقائي)<input id="t-${g}-p" data-pick="${g}" list="dl-${g}" value="${esc(S.grades[g].pick||"")}"></label></div></details></section>`;return h}
 function renderCupEdit(){const ms=allMatches().filter(m=>m.g=="cup");const {st,fin}=clTable();
- return `<section class="sec" style="--c:var(--gold)"><div><h2>دوري الأبطال</h2><p class="note">يظهر أبطال المراحل تلقائيًا بعد نهائيات الصفوف.</p></div><div class="card setup"><label>اسم فريق المعلمين<input id="teach" data-cupname="1" value="${esc(S.cup.teachers||"المعلمون")}"></label></div><div class="grid">
- ${ms.map(m=>{const r=S.cup.m[m.id];return `<div class="card"><h3>${m.label} · المباراة ${m.id+1}</h3><div class="m"><span class="t">${esc(m.a?tname(m.a):"—")}</span>${inp("cup|"+m.id,"h",r.h)}<span class="x">:</span>${inp("cup|"+m.id,"a",r.a)}<span class="t r">${esc(m.b?tname(m.b):"—")}</span></div><div class="meta"><input aria-label="ملاحظة" placeholder="ملاحظة: الحصة / الملعب" data-p="cup|${m.id}" data-s="d" value="${esc(r.d||"")}"></div>${woSel("cup|"+m.id,r,m.a,m.b)}</div>`}).join("")}</div>
+ return rosterLists()+`<section class="sec" style="--c:var(--gold)"><div><h2>دوري الأبطال</h2><p class="note">يظهر أبطال المراحل تلقائيًا بعد نهائيات الصفوف.</p></div><div class="card setup"><label>اسم فريق المعلمين<input id="teach" data-cupname="1" value="${esc(S.cup.teachers||"المعلمون")}"></label></div><div class="grid">
+ ${ms.map(m=>{const r=S.cup.m[m.id];return `<div class="card"><h3>${m.label} · المباراة ${m.id+1}</h3><div class="m"><span class="t">${esc(m.a?tname(m.a):"—")}</span>${inp("cup|"+m.id,"h",r.h)}<span class="x">:</span>${inp("cup|"+m.id,"a",r.a)}<span class="t r">${esc(m.b?tname(m.b):"—")}</span></div><div class="meta"><input aria-label="ملاحظة" placeholder="ملاحظة: الحصة / الملعب" data-p="cup|${m.id}" data-s="d" value="${esc(r.d||"")}"></div>${woSel("cup|"+m.id,r,m.a,m.b)}${scorerBox("cup|"+m.id,m.a,m.b,r)}</div>`}).join("")}</div>
  <div class="card"><h3>الترتيب</h3>${tableHTML(st,fin)}</div>
  <div class="card"><h3>نسخة احتياطية</h3><div class="tools"><button id="cp">نسخ رمز البيانات</button><button id="ld">استيراد</button><button id="rs" class="danger">مسح كل النتائج</button></div>
  <textarea id="io" aria-label="رمز البيانات" style="width:100%;margin-top:8px;min-height:60px;font:12px monospace;background:#06100a;color:var(--chalk);border:1px solid var(--line);border-radius:8px" hidden></textarea><p id="msg" class="note"></p></div></section>`}
@@ -553,15 +620,17 @@ function renderDetails(){const ms=allMatches().filter(m=>m.a||m.b);if(!EDKEY||!m
  if(!m)return `<p class="note">لا مباريات بعد.</p>`;
  const side=(v,f)=>`<select data-x="${f}">${[0,1].map(s=>`<option value="${s}" ${(+v||0)==s?"selected":""}>${esc(tname(s?m.b:m.a))}</option>`).join("")}</select>`;
  const mv=mvpOf(EDKEY);
- return `<section class="sec" style="--c:var(--gold)"><div><h2>تفاصيل المباريات</h2><p class="note">الموعد، الهدافون، والمرشحون لأفضل لاعب. لكل مرشح: تقييمك من 10، وعدد الأصوات التي نالها في نموذج التصويت. الدرجة = 70% تقييمك + 30% نسبة أصواته.</p></div>
+ return rosterLists()+`<section class="sec" style="--c:var(--gold)"><div><h2>تفاصيل المباريات</h2><p class="note">الموعد، الهدافون، والمرشحون لأفضل لاعب. لكل مرشح: تقييمك من 10، وعدد الأصوات التي نالها في نموذج التصويت. الدرجة = 70% تقييمك + 30% نسبة أصواته.</p></div>
  <div class="card"><label class="mini">المباراة<select class="edsel" id="edsel">${opts}</select></label>
  <div class="setup" style="margin-top:10px"><label>تاريخ المباراة<input type="date" id="dtd" data-dt="d" value="${esc((xx.dt||"").slice(0,10))}"></label><label>وقت الانطلاق (المبدئي 9:30 ص)<input type="time" id="dtt" data-dt="t" value="${esc((xx.dt||"").slice(11,16)||"09:30")}"></label><label>رابط نموذج التصويت (اختياري)<input id="vurl" data-x="vote" placeholder="https://forms.gle/…" value="${esc(xx.vote||"")}"></label></div></div>
- <div class="card"><h3>الهدّافون</h3>${(xx.sc||[]).map((s,i)=>`<div class="ed-row"><input id="scn${i}" placeholder="اسم اللاعب" data-x="sc.${i}.n" value="${esc(s.n||"")}">${side(s.s,"sc."+i+".s")}<input id="scg${i}" inputmode="numeric" placeholder="أهداف" data-x="sc.${i}.g" value="${esc(s.g??1)}"><button data-del="sc.${i}" aria-label="حذف">✕</button></div>`).join("")}
- <button class="btn ghost" style="margin-top:8px" data-add="sc">+ هدّاف</button></div>
- <div class="card"><h3>المرشحون لأفضل لاعب (حتى 4)</h3>${(xx.cand||[]).map((c,i)=>`<div class="ed-row c4"><input id="cn${i}" placeholder="اسم اللاعب" data-x="cand.${i}.n" value="${esc(c.n||"")}">${side(c.s,"cand."+i+".s")}<input id="cr${i}" inputmode="decimal" placeholder="تقييمك /10" data-x="cand.${i}.r" value="${esc(c.r??"")}"><input id="cv${i}" inputmode="numeric" placeholder="أصوات" data-x="cand.${i}.v" value="${esc(c.v??"")}"><label class="btn ghost" style="text-align:center;font-size:13px;padding:5px">${c.pid&&PHOTOS[c.pid]?"تغيير الصورة":"رفع صورة"}<input type="file" accept="image/*" data-photo="${i}" hidden></label><button data-del="cand.${i}" aria-label="حذف">✕</button></div>`).join("")}
+ <div class="card"><h3>الهدّافون</h3>${m.done&&!m.wo?`<div class="scb" style="border:none;padding:0">${scorerBox(EDKEY,m.a,m.b,EDKEY.startsWith("cup")?S.cup.m[m.id]:M(m.g,m.id))}</div>`:`<p class="note">تظهر خانات الهدّافين بعد إدخال نتيجة المباراة.</p>`}</div>
+ <div class="card"><h3>المرشحون لأفضل لاعب (حتى 4)</h3>${(xx.cand||[]).map((c,i)=>`<div class="ed-row c4"><input id="cn${i}" list="ro-${esc(+c.s?m.b:m.a)}" placeholder="اسم اللاعب" data-x="cand.${i}.n" value="${esc(c.n||"")}">${side(c.s,"cand."+i+".s")}<input id="cr${i}" inputmode="decimal" placeholder="تقييمك /10" data-x="cand.${i}.r" value="${esc(c.r??"")}"><input id="cv${i}" inputmode="numeric" placeholder="أصوات" data-x="cand.${i}.v" value="${esc(c.v??"")}"><label class="btn ghost" style="text-align:center;font-size:13px;padding:5px">${c.pid&&PHOTOS[c.pid]?"تغيير الصورة":"رفع صورة"}<input type="file" accept="image/*" data-photo="${i}" hidden></label><button data-del="cand.${i}" aria-label="حذف">✕</button></div>`).join("")}
  ${(xx.cand||[]).length<4?`<button class="btn ghost" style="margin-top:8px" data-add="cand">+ مرشح</button>`:""}
  ${mv&&m.done?`<p class="mini" style="margin-top:8px">الحالي: ${mv.rows.map(r=>`${esc(r.n)} ${r.score}% (${r.votes} صوت)`).join(" · ")}</p>`:""}
  <p class="mini" id="phmsg"></p></div></section>`}
+function renderRosters(){let h=`<section class="sec" style="--c:var(--gold)"><div><h2>قوائم اللاعبين</h2><p class="note">اكتب اسم كل لاعب في سطر. تظهر الأسماء اقتراحاتٍ عند تسجيل الهدّافين والمرشحين لأفضل لاعب، فيُكتب الاسم بالطريقة نفسها في كل مرة ويُحسب للاعب واحد في جدول الهدّافين. القائمة مرتبطة برقم الفصل.</p></div>`;
+ [...GK.map(g=>[GR[g].name,GR[g].c,[...S.grades[g].teams].sort()]),["فريق المعلمين","var(--gold)",["T"]]].forEach(([nm,c,ids])=>{h+=`<div class="card"><h3 style="color:${c}">${nm}</h3><div class="rgrid">${ids.map(id=>`<label>${esc(tname(id))}<textarea id="ro-ta-${esc(id)}" data-rost="${esc(id)}" rows="7" placeholder="اسم لاعب في كل سطر">${esc(((S.rost||{})[id]||[]).join("\n"))}</textarea></label>`).join("")}</div></div>`});
+ return h+`</section>`}
 function setPath(o,path,v){const ps=path.split(".");let c=o;for(let i=0;i<ps.length-1;i++){c=c[ps[i]] ||= (isNaN(ps[i+1])?{}:[])}c[ps[ps.length-1]]=v}
 
 /* ---------- render ---------- */
@@ -570,7 +639,7 @@ function stats(){let played=0,goals=0;allMatches().forEach(m=>{if(m.done){played
 function render(){const mv=document.getElementById("mv");if(mv){mv.setAttribute("aria-pressed",MODE=="view");document.getElementById("me").setAttribute("aria-pressed",MODE=="edit")}
  stats();const tb=document.getElementById("tabs");tb.hidden=MODE=="view";
  if(MODE=="view"){const sy=window.scrollY;document.getElementById("main").innerHTML=viewAll();renderModal();tickClock();return}
- const tabs=[["g3","ثالث ثانوي"],["g2","ثاني ثانوي"],["g1","أول ثانوي"],["cup","دوري الأبطال"],["det","تفاصيل المباريات"]];
+ const tabs=[["g3","ثالث ثانوي"],["g2","ثاني ثانوي"],["g1","أول ثانوي"],["cup","دوري الأبطال"],["det","تفاصيل المباريات"],["ros","قوائم اللاعبين"]];
  tb.innerHTML=tabs.map(([k,l])=>`<button role="tab" aria-selected="${TAB==k}" data-tab="${k}">${l}</button>`).join("");
  const f=document.activeElement,fid=f&&f.id,fp=f&&f.dataset&&f.dataset.p,fs=f&&f.dataset&&f.dataset.s,ft=f&&f.dataset&&f.dataset.team;
  document.getElementById("main").innerHTML=pubCard()+(TAB=="cup"?renderCupEdit():TAB=="det"?renderDetails():renderGrade(TAB));pubState();
@@ -586,6 +655,7 @@ setInterval(tickClock,1000);
 async function writeMine(col,key,val){if(!DB||!ME)return;const ref=DB.doc(col+"/"+ME);const cur=(col=="votes"?VOTES:PREDS)[ME]||{};const m={...cur,[key]:val};
  (col=="votes"?VOTES:PREDS)[ME]=m;render();try{await ref.set({m})}catch(e){live(e&&e.code=="not_granted"?"لا تملك صلاحية المشاركة في هذه الصفحة.":"تعذّر الحفظ، حاول مرة أخرى.")}}
 document.addEventListener("click",e=>{const t=e.target;
+ const jp=t.closest("[data-jump]");if(jp){document.getElementById(jp.dataset.jump)?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});return}
  if(t.closest("[data-close]")||t.id=="ov"){MODAL=null;renderModal();return}
  const v=t.closest("[data-vote]");if(v){const [g,id,i]=v.dataset.vote.split("|");writeMine("votes",g+"|"+id,+i);return}
  const pr=t.closest("[data-pred]");if(pr){const k=pr.dataset.pred;const a=document.getElementById("pa-"+k),b=document.getElementById("pb-"+k);
@@ -611,6 +681,8 @@ const digits=v=>v.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));
 document.addEventListener("input",e=>{const t=e.target;if(MODE!="edit")return;
  if(t.dataset.p){const [g,id]=t.dataset.p.split("|");const o=g=="cup"?S.cup.m[id]:M(g,id);o[t.dataset.s]=t.dataset.s=="d"?t.value:digits(t.value).replace(/\D/g,"");save();if(t.dataset.s!="d")render()}
  if(t.dataset.team){const [g,i]=t.dataset.team.split("|");S.grades[g].teams[i]=t.value;save();render()}
+ if(t.dataset.sc){const p=t.dataset.sc.split("|"),key=p[0]+"|"+p[1],k=+p[2],i=+p[3],st=p[0]=="cup"?S.cup.m[p[1]]:M(p[0],p[1]);const L=slotsOf(key,n(st.h)||0,n(st.a)||0);L[k][i]=t.value;X(key).sc=[...L[0].map(x=>({n:x,s:0,g:1})),...L[1].map(x=>({n:x,s:1,g:1}))];save();render();return}
+ if(t.dataset.rost!=null){(S.rost ||= {})[t.dataset.rost]=t.value.split("\n").map(NN).filter(Boolean);save();return}
  if(t.dataset.pick){S.grades[t.dataset.pick].pick=t.value.trim()||null;save();render()}
  if(t.dataset.cupname){S.cup.teachers=t.value;save();render()}
  if(t.dataset.dt){const xx=X(EDKEY),d=document.getElementById("dtd").value,tm=document.getElementById("dtt").value||"09:30";xx.dt=d?d+"T"+tm:"";save();return}
