@@ -304,6 +304,30 @@ img{max-width:100%}
 .scs input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#06100a;color:var(--chalk);min-width:0}
 .scs input.extra{border-color:#ff7b6b}
 .warn{margin-top:6px;font-size:12px;line-height:1.5;color:#ffb4a8;background:rgba(255,123,107,.1);border:1px solid rgba(255,123,107,.4);border-radius:8px;padding:6px 8px}
+/* rotate hint */
+.rot{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:55;display:flex;align-items:center;gap:12px;width:min(92vw,380px);padding:12px 14px;background:rgba(15,34,25,.97);border:1px solid var(--gold);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:rotIn .45s ease-out}
+.rot.out{animation:rotOut .45s ease-in forwards}
+.rot .rt{flex:1;min-width:0;line-height:1.4}.rot b{display:block;color:var(--gold);font-size:15px}.rot .rt span{font-size:12.5px;color:#cfe2d6}
+.rot button{flex:none;width:32px;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--chalk);font:inherit;cursor:pointer}
+.rot .ph{flex:none;width:22px;height:36px;border:2.5px solid var(--gold);border-radius:6px;position:relative;animation:tilt 2.4s ease-in-out infinite}
+.rot .ph::after{content:"";position:absolute;left:50%;bottom:3px;width:5px;height:2px;margin-left:-2.5px;border-radius:2px;background:var(--gold)}
+@keyframes tilt{0%,25%{transform:rotate(0)}50%,80%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+@keyframes rotIn{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes rotOut{to{opacity:0;transform:translate(-50%,20px)}}
+@media (prefers-reduced-motion:reduce){.rot,.rot.out,.rot .ph{animation:none}}
+/* landscape phones and small tablets: fit the five-column bracket without sideways scroll */
+@media (min-width:701px) and (max-width:980px){
+ .pitch{min-width:0;padding:12px 2px}
+ .br{grid-template-columns:1.2fr .95fr 1.05fr .95fr 1.2fr}
+ .col{padding:0 5px;gap:12px}
+ .tr{padding:5px 6px;gap:4px;font-size:12.5px}
+ .tr .nm{gap:5px}
+ .shirt{width:22px;height:22px}
+ .sc{font-size:17px;min-width:22px;padding:0 4px}
+ .node .lab{font-size:10px;padding:4px 6px;flex-wrap:wrap}
+ .mvp{font-size:10.5px;padding:3px 6px;gap:4px}
+ .trophy svg{width:40px;height:40px}.trophy b{font-size:18px}
+}
 </style>
 <style>html,body{margin:0}</style>
 </head>
@@ -710,6 +734,16 @@ const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
  requestAnimationFrame(tick)})();
 document.documentElement.dir="rtl";document.documentElement.lang="ar";
 render();
+
+/* ---------- rotate hint (public page, phones in portrait, at most once a day) ---------- */
+(function rotHint(){if(window.LEAGUE_ADMIN)return;let mq;try{mq=matchMedia("(pointer:coarse) and (orientation:portrait) and (max-width:700px)")}catch(e){return}
+ const day=new Date().toDateString();let seen=null;try{seen=localStorage.getItem("rotHint")}catch(e){}if(seen==day||!mq.matches)return;
+ const d=document.createElement("div");d.className="rot";d.setAttribute("role","status");
+ d.innerHTML=`<span class="ph" aria-hidden="true"></span><div class="rt"><b>أدر جوالك أفقيًا</b><span>لترى مخطط كل مرحلة كاملًا كما على السبورة</span></div><button type="button" aria-label="إغلاق">✕</button>`;
+ document.body.appendChild(d);
+ const close=()=>{if(d.classList.contains("out"))return;d.classList.add("out");setTimeout(()=>d.remove(),450);try{localStorage.setItem("rotHint",day)}catch(e){}};
+ d.querySelector("button").addEventListener("click",close);setTimeout(close,8000);
+ const onc=e=>{if(!e.matches)close()};mq.addEventListener?mq.addEventListener("change",onc):mq.addListener&&mq.addListener(onc)})();
 </script>
 </body>
 </html>
