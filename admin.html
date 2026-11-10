@@ -328,6 +328,15 @@ img{max-width:100%}
  .mvp{font-size:10.5px;padding:3px 6px;gap:4px}
  .trophy svg{width:40px;height:40px}.trophy b{font-size:18px}
 }
+.dbx{margin-top:8px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.18)}
+.dbx.need{border-color:rgba(242,193,78,.6)}
+.dsum{width:100%;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:7px 10px;background:none;border:none;color:var(--chalk);font:inherit;cursor:pointer;text-align:right}
+.dsum .dt1{font-weight:700;font-size:13px;color:var(--gold)}
+.dwarn{font-size:11.5px;font-weight:700;color:#07130d;background:var(--gold);border-radius:999px;padding:1px 9px}
+.dbody{padding:4px 10px 10px;border-top:1px dashed var(--line)}
+.dbody .setup{margin-top:8px}
+.ed-row input.miss{border-color:var(--gold)}
+@media(max-width:640px){.ed-row.c4{grid-template-columns:1fr 1fr 1fr}}
 </style>
 <style>html,body{margin:0}</style>
 </head>
@@ -624,11 +633,11 @@ function scorerBox(key,a,b,m){const H=n(m.h),A=n(m.a);if(m.wo||H===null||A===nul
  return `<div class="scb"><div class="mini">الهدّافون ${warn?"· تحتاج مراجعة":blank?`· باقي ${blank} بلا اسم`:"✓ مكتملة"}</div><div class="scg">${side(0,a)}${side(1,b)}</div>${warn?`<div class="warn">${esc(warn)}</div>`:""}</div>`}
 function woSel(path,m,a,b){return `<label class="wo">طريقة الحسم <select data-wo="${path}"><option value="">مباراة عادية</option><option value="h" ${m.wo=="h"?"selected":""} ${a?"":"disabled"}>انسحاب ${esc(a?tname(a):"الفريق الأول")}</option><option value="a" ${m.wo=="a"?"selected":""} ${b?"":"disabled"}>انسحاب ${esc(b?tname(b):"الفريق الثاني")}</option></select></label>`}
 function mrow(g,id,a,b,label){const m=M(g,id);return `<div class="m"><span class="t">${esc(a?tname(a):"—")}</span>${inp(g+"|"+id,"h",m.h)}<span class="x">:</span>${inp(g+"|"+id,"a",m.a)}<span class="t r">${esc(b?tname(b):"—")}</span></div>
- <div class="meta"><span>${label}</span><input aria-label="ملاحظة الموعد" placeholder="ملاحظة: الحصة / الملعب" data-p="${g}|${id}" data-s="d" value="${esc(m.d||"")}"></div>${woSel(g+"|"+id,m,a,b)}${scorerBox(g+"|"+id,a,b,m)}`}
+ <div class="meta"><span>${label}</span><input aria-label="ملاحظة الموعد" placeholder="ملاحظة: الحصة / الملعب" data-p="${g}|${id}" data-s="d" value="${esc(m.d||"")}"></div>${woSel(g+"|"+id,m,a,b)}${scorerBox(g+"|"+id,a,b,m)}${detailsBox(g+"|"+id)}`}
 function pen(g,id,a,b){const p=M(g,id);return `<div class="pen">ركلات الترجيح: ${esc(tname(a))} ${inp(g+"|"+id,"h",p.h)} – ${inp(g+"|"+id,"a",p.a)} ${esc(tname(b))}</div>`}
 function grpCard(g,i,a,b,r,extra=""){return `<div class="card grp"><div class="gh"><h3>المجموعة ${i}</h3><span class="badge ${r&&r.w?"":"wait"}">${r&&r.w?"المتأهل: "+esc(tname(r.w)):"لم تُحسم"}</span></div>${extra}${mrow(g,"G"+i+"a",a,b,"ذهاب")}${mrow(g,"G"+i+"b",b,a,"إياب")}${r&&r.tied?pen(g,"G"+i+"p",a,b):""}</div>`}
 function renderGrade(g){if(g=="ros")return rosterLists()+renderRosters();const G=GR[g],T=S.grades[g].teams,R=compute(g);
- let h=rosterLists()+`<section class="sec" style="--c:${G.c}"><div><h2>${G.name}</h2><p class="note">أدخل النتيجة، فتظهر تحتها خانات الهدّافين بعدد الأهداف. الموعد وأفضل لاعب من تبويب "تفاصيل المباريات".</p></div><div class="grid">`;
+ let h=rosterLists()+`<section class="sec" style="--c:${G.c}"><div><h2>${G.name}</h2><p class="note">أدخل النتيجة، فتظهر تحتها خانات الهدّافين بعدد الأهداف. والموعد وأفضل لاعب من سطر «الموعد وأفضل لاعب» تحت كل مباراة.</p></div><div class="grid">`;
  for(let i=0;i<3;i++)h+=grpCard(g,i+1,T[i*2],T[i*2+1],R.g[i]);
  let ex=`<div class="setup g4ed"><label>المتأهل المباشر<input id="g4d-${g}" data-team="${g}|6" value="${esc(T[6])}"></label><label>خصمه (فرصة ثانية)<input id="g4p-${g}" data-pick="${g}" list="dl-${g}" placeholder="فارغ = أفضل خاسر تلقائيًا" value="${esc(S.grades[g].pick||"")}"><datalist id="dl-${g}">${T.slice(0,6).map(t=>`<option value="${esc(t)}">`).join("")}</datalist></label></div><p class="note">${R.picked?"الخصم محدد يدويًا":"الخصم يُحسب تلقائيًا: أفضل خاسر من المجموعات 1–3"}${R.best?": <b>"+esc(tname(R.best))+"</b>":"، ويظهر بعد حسم المجموعات الثلاث"}.</p>`;
  if(R.bestTie)ex+=`<div class="pen">تساوٍ تام بين الخاسرين، اختر نتيجة القرعة: ${R.losers.filter(x=>x.Pts==R.losers[0].Pts&&x.GD==R.losers[0].GD&&x.F==R.losers[0].F).map(x=>`<button class="btn ghost" data-draw="${g}|${esc(x.t)}">${esc(tname(x.t))}</button>`).join(" ")}</div>`;
@@ -637,10 +646,25 @@ function renderGrade(g){if(g=="ros")return rosterLists()+renderRosters();const G
  <details class="card"><summary><b>أسماء الفصول وتوزيع المجموعات</b></summary><div class="setup" style="margin-top:10px">${["م1 – أ","م1 – ب","م2 – أ","م2 – ب","م3 – أ","م3 – ب","م4 – متأهل مباشر"].map((l,i)=>`<label>${l}<input id="t-${g}-${i}" data-team="${g}|${i}" value="${esc(T[i])}"></label>`).join("")}<label>م4 – الخصم (فارغ = تلقائي)<input id="t-${g}-p" data-pick="${g}" list="dl-${g}" value="${esc(S.grades[g].pick||"")}"></label></div></details></section>`;return h}
 function renderCupEdit(){const ms=allMatches().filter(m=>m.g=="cup");const {st,fin}=clTable();
  return rosterLists()+`<section class="sec" style="--c:var(--gold)"><div><h2>دوري الأبطال</h2><p class="note">يظهر أبطال المراحل تلقائيًا بعد نهائيات الصفوف.</p></div><div class="card setup"><label>اسم فريق المعلمين<input id="teach" data-cupname="1" value="${esc(S.cup.teachers||"المعلمون")}"></label></div><div class="grid">
- ${ms.map(m=>{const r=S.cup.m[m.id];return `<div class="card"><h3>${m.label} · المباراة ${m.id+1}</h3><div class="m"><span class="t">${esc(m.a?tname(m.a):"—")}</span>${inp("cup|"+m.id,"h",r.h)}<span class="x">:</span>${inp("cup|"+m.id,"a",r.a)}<span class="t r">${esc(m.b?tname(m.b):"—")}</span></div><div class="meta"><input aria-label="ملاحظة" placeholder="ملاحظة: الحصة / الملعب" data-p="cup|${m.id}" data-s="d" value="${esc(r.d||"")}"></div>${woSel("cup|"+m.id,r,m.a,m.b)}${scorerBox("cup|"+m.id,m.a,m.b,r)}</div>`}).join("")}</div>
+ ${ms.map(m=>{const r=S.cup.m[m.id];return `<div class="card"><h3>${m.label} · المباراة ${m.id+1}</h3><div class="m"><span class="t">${esc(m.a?tname(m.a):"—")}</span>${inp("cup|"+m.id,"h",r.h)}<span class="x">:</span>${inp("cup|"+m.id,"a",r.a)}<span class="t r">${esc(m.b?tname(m.b):"—")}</span></div><div class="meta"><input aria-label="ملاحظة" placeholder="ملاحظة: الحصة / الملعب" data-p="cup|${m.id}" data-s="d" value="${esc(r.d||"")}"></div>${woSel("cup|"+m.id,r,m.a,m.b)}${scorerBox("cup|"+m.id,m.a,m.b,r)}${detailsBox("cup|"+m.id)}</div>`}).join("")}</div>
  <div class="card"><h3>الترتيب</h3>${tableHTML(st,fin)}</div>
  <div class="card"><h3>نسخة احتياطية</h3><div class="tools"><button id="cp">نسخ رمز البيانات</button><button id="ld">استيراد</button><button id="rs" class="danger">مسح كل النتائج</button></div>
  <textarea id="io" aria-label="رمز البيانات" style="width:100%;margin-top:8px;min-height:60px;font:12px monospace;background:#06100a;color:var(--chalk);border:1px solid var(--line);border-radius:8px" hidden></textarea><p id="msg" class="note"></p></div></section>`}
+const OPEN=new Set();
+function phEl(k){return document.querySelector('[data-k="'+k+'"] .phmsg')||{}}
+function detailsBox(key){const m=findM(key);if(!m||!(m.a||m.b))return "";const xx=X(key),id=key.replace(/\|/g,"_"),open=OPEN.has(key);
+ const cand=xx.cand||[],named=cand.filter(c=>NN(c.n));
+ const miss=m.done&&!m.wo?(!named.length?"لم يُختر أفضل لاعب":named.some(c=>c.r===""||c.r==null)?"مرشح بلا تقييم":""):"";
+ const sum=(xx.dt?fmtD(xx.dt.slice(0,10))+" · "+fmtT(xx.dt.slice(11,16)):"بلا موعد")+" · "+(named.length?(named.length==1?"مرشح واحد":named.length+" مرشحين"):"لا مرشحين");
+ const side=(v,f)=>`<select data-x="${f}" aria-label="فصل اللاعب">${[0,1].map(s=>`<option value="${s}" ${(+v||0)==s?"selected":""}>${esc(tname(s?m.b:m.a))}</option>`).join("")}</select>`;
+ const mv=mvpOf(key);
+ return `<div class="dbx ${miss?"need":""}" data-k="${key}"><button type="button" class="dsum" data-dtoggle="${key}" aria-expanded="${open}"><span class="dt1">${open?"▾":"▸"} الموعد وأفضل لاعب</span><span class="mini">${esc(sum)}</span>${miss?`<span class="dwarn">${miss}</span>`:""}</button>
+ ${open?`<div class="dbody"><div class="setup"><label>تاريخ المباراة<input type="date" id="dtd-${id}" data-dt="d" value="${esc((xx.dt||"").slice(0,10))}"></label><label>وقت الانطلاق (المبدئي 9:30 ص)<input type="time" id="dtt-${id}" data-dt="t" value="${esc((xx.dt||"").slice(11,16)||"09:30")}"></label><label>رابط نموذج التصويت (اختياري)<input id="vurl-${id}" data-x="vote" placeholder="https://forms.gle/…" value="${esc(xx.vote||"")}"></label></div>
+ <div class="mini" style="margin-top:10px">المرشحون لأفضل لاعب (حتى 4): الاسم، فصله، تقييمك من 10، أصواته في النموذج. الدرجة = 70% تقييمك + 30% نسبة أصواته.</div>
+ ${cand.map((c,i)=>`<div class="ed-row c4"><input id="cn-${id}-${i}" list="ro-${esc(+c.s?m.b:m.a)}" placeholder="اسم اللاعب" data-x="cand.${i}.n" value="${esc(c.n||"")}">${side(c.s,"cand."+i+".s")}<input id="cr-${id}-${i}" inputmode="decimal" placeholder="تقييمك /10" data-x="cand.${i}.r" value="${esc(c.r??"")}" class="${NN(c.n)&&(c.r===""||c.r==null)?"miss":""}"><input id="cv-${id}-${i}" inputmode="numeric" placeholder="أصوات" data-x="cand.${i}.v" value="${esc(c.v??"")}"><label class="btn ghost" style="text-align:center;font-size:13px;padding:5px">${c.pid&&PHOTOS[c.pid]?"تغيير الصورة":"رفع صورة"}<input type="file" accept="image/*" data-photo="${i}" hidden></label><button type="button" data-del="cand.${i}" aria-label="حذف المرشح">✕</button></div>`).join("")}
+ ${cand.length<4?`<button type="button" class="btn ghost" style="margin-top:8px" data-add="cand">+ مرشح</button>`:""}
+ ${mv&&m.done?`<p class="mini" style="margin-top:8px">الترتيب الحالي: ${mv.rows.map(r=>`${esc(r.n)} ${r.score}% (${r.votes} صوت)`).join(" · ")}</p>`:""}
+ <p class="mini phmsg"></p></div>`:""}</div>`}
 function renderDetails(){const ms=allMatches().filter(m=>m.a||m.b);if(!EDKEY||!ms.find(m=>m.key==EDKEY))EDKEY=(ms[0]||{}).key||"";
  const m=findM(EDKEY);const xx=EDKEY?X(EDKEY):{};
  const opts=ms.map(o=>`<option value="${o.key}" ${o.key==EDKEY?"selected":""}>${esc(o.gname)} · ${esc(o.label)} · ${esc(tname(o.a))} × ${esc(tname(o.b))}${o.done?" ("+o.x+"–"+o.y+")":""}</option>`).join("");
@@ -666,7 +690,7 @@ function stats(){let played=0,goals=0;allMatches().forEach(m=>{if(m.done){played
 function render(){const mv=document.getElementById("mv");if(mv){mv.setAttribute("aria-pressed",MODE=="view");document.getElementById("me").setAttribute("aria-pressed",MODE=="edit")}
  stats();const tb=document.getElementById("tabs");tb.hidden=MODE=="view";
  if(MODE=="view"){const sy=window.scrollY;document.getElementById("main").innerHTML=viewAll();renderModal();tickClock();return}
- const tabs=[["g3","ثالث ثانوي"],["g2","ثاني ثانوي"],["g1","أول ثانوي"],["cup","دوري الأبطال"],["det","تفاصيل المباريات"],["ros","قوائم اللاعبين"]];
+ const tabs=[["g3","ثالث ثانوي"],["g2","ثاني ثانوي"],["g1","أول ثانوي"],["cup","دوري الأبطال"],["ros","قوائم اللاعبين"]];
  tb.innerHTML=tabs.map(([k,l])=>`<button role="tab" aria-selected="${TAB==k}" data-tab="${k}">${l}</button>`).join("");
  const f=document.activeElement,fid=f&&f.id,fp=f&&f.dataset&&f.dataset.p,fs=f&&f.dataset&&f.dataset.s,ft=f&&f.dataset&&f.dataset.team;
  document.getElementById("main").innerHTML=pubCard()+(TAB=="cup"?renderCupEdit():TAB=="det"?renderDetails():renderGrade(TAB));pubState();
@@ -681,7 +705,7 @@ setInterval(tickClock,1000);
 /* ---------- events ---------- */
 async function writeMine(col,key,val){if(!DB||!ME)return;const ref=DB.doc(col+"/"+ME);const cur=(col=="votes"?VOTES:PREDS)[ME]||{};const m={...cur,[key]:val};
  (col=="votes"?VOTES:PREDS)[ME]=m;render();try{await ref.set({m})}catch(e){live(e&&e.code=="not_granted"?"لا تملك صلاحية المشاركة في هذه الصفحة.":"تعذّر الحفظ، حاول مرة أخرى.")}}
-document.addEventListener("click",e=>{const t=e.target;
+document.addEventListener("click",e=>{const t=e.target;{const kk=t.closest&&t.closest("[data-k]");if(kk)EDKEY=kk.dataset.k}
  const jp=t.closest("[data-jump]");if(jp){document.getElementById(jp.dataset.jump)?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});return}
  if(t.closest("[data-close]")||t.id=="ov"){MODAL=null;renderModal();return}
  const v=t.closest("[data-vote]");if(v){const [g,id,i]=v.dataset.vote.split("|");writeMine("votes",g+"|"+id,+i);return}
@@ -692,6 +716,7 @@ document.addEventListener("click",e=>{const t=e.target;
  const tm=t.closest("[data-tm]");if(tm&&MODE=="view"){const [g,...r]=tm.dataset.tm.split("|");const id=r.join("|");if(id){MODAL={t:"t",g,id};renderModal();e.stopPropagation();return}}
  const op=t.closest("[data-open]");if(op&&MODE=="view"){MODAL={t:"m",k:op.dataset.open};renderModal();return}
  const b=t.closest("button");if(!b)return;
+ if(b.dataset.dtoggle){const k=b.dataset.dtoggle;OPEN.has(k)?OPEN.delete(k):OPEN.add(k);render();return}
  if(b.id=="mv"){MODE="view";render()}if(b.id=="me"){MODE="edit";MODAL=null;renderModal();render()}
  if(b.dataset.tab){TAB=b.dataset.tab;render()}
  if(b.dataset.draw){const [g,val]=b.dataset.draw.split("|");S.grades[g].draw=val;save();render()}
@@ -705,26 +730,26 @@ document.addEventListener("click",e=>{const t=e.target;
  if(b.id=="rs"){if(b.dataset.c){absorb(blank());save();render()}else{b.dataset.c=1;b.textContent="اضغط مرة أخرى للتأكيد"}}});
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&MODAL){MODAL=null;renderModal()}});
 const digits=v=>v.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));
-document.addEventListener("input",e=>{const t=e.target;if(MODE!="edit")return;
+document.addEventListener("input",e=>{const t=e.target;{const kk=t.closest&&t.closest("[data-k]");if(kk)EDKEY=kk.dataset.k}if(MODE!="edit")return;
  if(t.dataset.p){const [g,id]=t.dataset.p.split("|");const o=g=="cup"?S.cup.m[id]:M(g,id);o[t.dataset.s]=t.dataset.s=="d"?t.value:digits(t.value).replace(/\D/g,"");save();if(t.dataset.s!="d")render()}
  if(t.dataset.team){const [g,i]=t.dataset.team.split("|");S.grades[g].teams[i]=t.value;save();render()}
  if(t.dataset.sc){const p=t.dataset.sc.split("|"),key=p[0]+"|"+p[1],k=+p[2],i=+p[3],st=p[0]=="cup"?S.cup.m[p[1]]:M(p[0],p[1]);const L=slotsOf(key,n(st.h)||0,n(st.a)||0);L[k][i]=t.value;X(key).sc=[...L[0].map(x=>({n:x,s:0,g:1})),...L[1].map(x=>({n:x,s:1,g:1}))];save();render();return}
  if(t.dataset.rost!=null){(S.rost ||= {})[t.dataset.rost]=t.value.split("\n").map(NN).filter(Boolean);save();return}
  if(t.dataset.pick){S.grades[t.dataset.pick].pick=t.value.trim()||null;save();render()}
  if(t.dataset.cupname){S.cup.teachers=t.value;save();render()}
- if(t.dataset.dt){const xx=X(EDKEY),d=document.getElementById("dtd").value,tm=document.getElementById("dtt").value||"09:30";xx.dt=d?d+"T"+tm:"";save();return}
+ if(t.dataset.dt){const xx=X(EDKEY),bx=t.closest("[data-k]")||document,d=(bx.querySelector("[data-dt=d]")||{}).value||"",tm=(bx.querySelector("[data-dt=t]")||{}).value||"09:30";xx.dt=d?d+"T"+tm:"";save();if(e.type=="change")render();return}
  if(t.dataset.x&&t.type!="file"&&/^cand\.\d+\.n$/.test(t.dataset.x)){const m=findM(EDKEY),ro=S.rost||{},nm=NN(t.value),tm=m&&[m.a,m.b].find(x=>x&&(ro[x]||[]).some(y=>NN(y)==nm));if(m&&tm&&tm!==(+X(EDKEY).cand[+t.dataset.x.split(".")[1]].s==1?m.b:m.a)){X(EDKEY).cand[+t.dataset.x.split(".")[1]].s=tm==m.b?1:0;setTimeout(render,0)}}
  if(t.dataset.x&&t.type!="file"){let v=t.type=="checkbox"?t.checked:t.value;if(/\.(g|r|v)$/.test(t.dataset.x))v=digits(v).replace(/[^\d.]/g,"");if(/\.s$/.test(t.dataset.x))v=+v;setPath(X(EDKEY),t.dataset.x,v);save();if(t.tagName=="SELECT"||t.type=="checkbox")render()}});
-document.addEventListener("change",e=>{const t=e.target;
+document.addEventListener("change",e=>{const t=e.target;{const kk=t.closest&&t.closest("[data-k]");if(kk)EDKEY=kk.dataset.k}
  if(t.id=="edsel"){EDKEY=t.value;render();return}
  if(t.id=="openjson"&&t.files&&t.files[0]){t.files[0].text().then(s=>{absorb(JSON.parse(s));save();render();live("فُتح الملف.")}).catch(()=>live("الملف غير صالح."));return}
  if(t.dataset.wo!=null){const [g,id]=t.dataset.wo.split("|");const o=g=="cup"?S.cup.m[id]:M(g,id);o.wo=t.value;
   if(t.value=="h"){o.h="0";o.a="3"}else if(t.value=="a"){o.h="3";o.a="0"}save();render();return}
- if(t.dataset.photo!=null&&t.files&&t.files[0]){const i=+t.dataset.photo,file=t.files[0],msg=document.getElementById("phmsg");msg.textContent="جارٍ تجهيز الصورة…";
+ if(t.dataset.photo!=null&&t.files&&t.files[0]){const i=+t.dataset.photo,PK=EDKEY,file=t.files[0],msg=phEl(PK);msg.textContent="جارٍ تجهيز الصورة…";
   const img=new Image();img.onload=async()=>{const sz=220,cv=document.createElement("canvas");const s=Math.min(img.width,img.height);cv.width=cv.height=sz;
    cv.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,sz,sz);const d=cv.toDataURL("image/jpeg",.82);URL.revokeObjectURL(img.src);
    const pid="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-   try{(S.photos ||= {})[pid]=d;PHOTOS=S.photos;X(EDKEY).cand[i].pid=pid;save();render();document.getElementById("phmsg").textContent="رُفعت الصورة."}catch(err){msg.textContent="تعذّر رفع الصورة. جرّب صورة أخرى."}};
+   try{(S.photos ||= {})[pid]=d;PHOTOS=S.photos;X(PK).cand[i].pid=pid;save();render();phEl(PK).textContent="رُفعت الصورة."}catch(err){msg.textContent="تعذّر رفع الصورة. جرّب صورة أخرى."}};
   img.onerror=()=>msg.textContent="تعذّر قراءة الصورة.";img.src=URL.createObjectURL(file)}});
 
 /* ---------- trophy + rays ---------- */
