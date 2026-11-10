@@ -428,8 +428,10 @@ function absorb(d){const b=blank();S.grades=d.grades||b.grades;S.cup=d.cup||b.cu
 async function fetchRemote(){const r=await fetch("results.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json()}
 function stamp(){if(!S.updated)return "";try{return " · آخر تحديث "+new Date(S.updated).toLocaleString("ar-SA-u-ca-gregory-nu-arab",{day:"numeric",month:"long",hour:"numeric",minute:"2-digit"})}catch(e){return ""}}
 async function load(){if(ADMIN){let loc=null;try{loc=JSON.parse(localStorage.getItem(LSK))}catch(e){}
-  if(loc){absorb(loc);DIRTY=true;live("تعمل على نسختك المحفوظة في هذا الجهاز. نزّل الملف وارفعه لينشر.")}
-  else{try{absorb(await fetchRemote());live("حُمّلت النتائج المنشورة حاليًا.")}catch(e){live("لم أجد results.json، ابدأ من الصفر.")}}
+  let rem=null;try{rem=await fetchRemote()}catch(e){}
+  if(loc&&(!rem||(loc.updated||"")>(rem.updated||""))){absorb(loc);DIRTY=true;live(rem?"تعمل على نسخة هذا الجهاز، وفيها تعديلات أحدث من المنشورة لم تُرفع بعد. نزّل الملف وارفعه لينشر.":"تعمل على نسخة هذا الجهاز (تعذّر الوصول إلى النسخة المنشورة).")}
+  else if(rem){if(loc){try{localStorage.setItem(LSK+"-old",JSON.stringify(loc));localStorage.removeItem(LSK)}catch(e){}}absorb(rem);DIRTY=false;live(loc?"حُمّلت النسخة المنشورة لأنها أحدث من نسخة هذا الجهاز القديمة.":"حُمّلت النتائج المنشورة حاليًا.")}
+  else live("لم أجد results.json، ابدأ من الصفر.");
   document.getElementById("modebar").hidden=false;MODE="edit";render();return}
  try{absorb(await fetchRemote());live("النتائج"+stamp())}catch(e){live("تعذّر تحميل النتائج، أعد تحميل الصفحة.")}render()}
 load();if(!ADMIN)setInterval(async()=>{if(MODAL)return;try{const d=await fetchRemote();if(d.updated!==S.updated){absorb(d);live("النتائج"+stamp());render()}}catch(e){}},120000);
