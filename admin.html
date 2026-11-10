@@ -337,6 +337,13 @@ img{max-width:100%}
 .dbody .setup{margin-top:8px}
 .ed-row input.miss{border-color:var(--gold)}
 @media(max-width:640px){.ed-row.c4{grid-template-columns:1fr 1fr 1fr}}
+/* nominee rows inside a match card: name on its own line */
+.dbx .ed-row.c4{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.dbx .ed-row.c4>input[data-x$=".n"]{grid-column:1/-1;font-size:15px;padding:7px 10px}
+.dbx .ed-row.c4>label{grid-column:1/3}
+.dbx .ed-row.c4>button{grid-column:3}
+.dbx .ed-row.c4 select{padding:5px 4px}
+.dbx .rlab{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 34px;gap:6px;font-size:11px;color:var(--muted);margin-top:2px}
 </style>
 <style>html,body{margin:0}</style>
 </head>
@@ -663,7 +670,7 @@ function detailsBox(key){const m=findM(key);if(!m||!(m.a||m.b))return "";const x
  return `<div class="dbx ${miss?"need":""}" data-k="${key}"><button type="button" class="dsum" data-dtoggle="${key}" aria-expanded="${open}"><span class="dt1">${open?"▾":"▸"} الموعد وأفضل لاعب</span><span class="mini">${esc(sum)}</span>${miss?`<span class="dwarn">${miss}</span>`:""}</button>
  ${open?`<div class="dbody"><div class="setup"><label>تاريخ المباراة<input type="date" id="dtd-${id}" data-dt="d" value="${esc((xx.dt||"").slice(0,10))}"></label><label>وقت الانطلاق (المبدئي 9:30 ص)<input type="time" id="dtt-${id}" data-dt="t" value="${esc((xx.dt||"").slice(11,16)||"09:30")}"></label><label>رابط نموذج التصويت (اختياري)<input id="vurl-${id}" data-x="vote" placeholder="https://forms.gle/…" value="${esc(xx.vote||"")}"></label></div>
  <div class="mini" style="margin-top:10px">المرشحون لأفضل لاعب (حتى 4): الاسم، فصله، تقييمك من 10، أصواته في النموذج. الدرجة = 70% تقييمك + 30% نسبة أصواته.</div>
- ${cand.map((c,i)=>`<div class="ed-row c4"><input id="cn-${id}-${i}" list="ro-${esc(+c.s?m.b:m.a)}" placeholder="اسم اللاعب" data-x="cand.${i}.n" value="${esc(c.n||"")}">${side(c.s,"cand."+i+".s")}<input id="cr-${id}-${i}" inputmode="decimal" placeholder="تقييمك /10" data-x="cand.${i}.r" value="${esc(c.r??"")}" class="${NN(c.n)&&(c.r===""||c.r==null)?"miss":""}"><input id="cv-${id}-${i}" inputmode="numeric" placeholder="أصوات" data-x="cand.${i}.v" value="${esc(c.v??"")}"><label class="btn ghost" style="text-align:center;font-size:13px;padding:5px">${c.pid&&PHOTOS[c.pid]?"تغيير الصورة":"رفع صورة"}<input type="file" accept="image/*" data-photo="${i}" hidden></label><button type="button" data-del="cand.${i}" aria-label="حذف المرشح">✕</button></div>`).join("")}
+ ${cand.map((c,i)=>`<div class="ed-row c4"><input id="cn-${id}-${i}" list="ro-${esc(+c.s?m.b:m.a)}" placeholder="اسم اللاعب" data-x="cand.${i}.n" value="${esc(c.n||"")}">${side(c.s,"cand."+i+".s")}<input id="cr-${id}-${i}" inputmode="decimal" placeholder="من 10" data-x="cand.${i}.r" value="${esc(c.r??"")}" class="${NN(c.n)&&(c.r===""||c.r==null)?"miss":""}"><input id="cv-${id}-${i}" inputmode="numeric" placeholder="أصوات" data-x="cand.${i}.v" value="${esc(c.v??"")}"><label class="btn ghost" style="text-align:center;font-size:13px;padding:5px">${c.pid&&PHOTOS[c.pid]?"تغيير الصورة":"رفع صورة"}<input type="file" accept="image/*" data-photo="${i}" hidden></label><button type="button" data-del="cand.${i}" aria-label="حذف المرشح">✕</button></div>`).join("")}
  ${cand.length<4?`<button type="button" class="btn ghost" style="margin-top:8px" data-add="cand">+ مرشح</button>`:""}
  ${mv&&m.done?`<p class="mini" style="margin-top:8px">الترتيب الحالي: ${mv.rows.map(r=>`${esc(r.n)} ${r.score}% (${r.votes} صوت)`).join(" · ")}</p>`:""}
  <p class="mini phmsg"></p></div>`:""}</div>`}
